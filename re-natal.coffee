@@ -1,4 +1,4 @@
-# Natal
+# Re-Natal
 # Bootstrap ClojureScript React Native apps
 # Dan Motzenbecker
 # http://oxism.com
@@ -20,10 +20,10 @@ validNameRx     = /^[A-Z][0-9A-Z]*$/i
 camelRx         = /([a-z])([A-Z])/g
 projNameRx      = /\$PROJECT_NAME\$/g
 projNameHyphRx  = /\$PROJECT_NAME_HYPHENATED\$/g
-rnVersion       = '0.13.0'
+rnVersion       = '0.14.2'
 rnPackagerPort  = 8081
 podMinVersion   = '0.38.2'
-process.title   = 'natal'
+process.title   = 're-natal'
 reactInterfaces =
   om:        'org.omcljs/om "0.9.0"'
   'om-next': 'org.omcljs/om "1.0.0-alpha14"'
@@ -105,7 +105,7 @@ ensureFreePort = (cb) ->
 
 
 generateConfig = (name) ->
-  log 'Creating Natal config'
+  log 'Creating Re-Natal config'
   config =
     name:   name
     device: getUuidForDevice 'iPhone 6s'
@@ -116,26 +116,26 @@ generateConfig = (name) ->
 
 writeConfig = (config) ->
   try
-    fs.writeFileSync '.natal', JSON.stringify config, null, 2
+    fs.writeFileSync '.re-natal', JSON.stringify config, null, 2
   catch {message}
     logErr \
       if message.match /EACCES/i
-        'Invalid write permissions for creating .natal config file'
+        'Invalid write permissions for creating .re-natal config file'
       else
         message
 
 
 readConfig = ->
   try
-    JSON.parse readFile '.natal'
+    JSON.parse readFile '.re-natal'
   catch {message}
     logErr \
       if message.match /ENOENT/i
-        'No Natal config was found in this directory (.natal)'
+        'No Re-Natal config was found in this directory (.re-natal)'
       else if message.match /EACCES/i
-        'No read permissions for .natal'
+        'No read permissions for .re-natal'
       else if message.match /Unexpected/i
-        '.natal contains malformed JSON'
+        '.re-natal contains malformed JSON'
       else
         message
 
@@ -186,7 +186,7 @@ init = (projName, interfaceName) ->
     podVersion = exec('pod --version', true).toString().trim()
     unless semver.satisfies podVersion, ">=#{podMinVersion}"
       throw new Error """
-                      Natal requires CocoaPods #{podMinVersion} or higher (you have #{podVersion}).
+                      Re-Natal requires CocoaPods #{podMinVersion} or higher (you have #{podVersion}).
                       Run [sudo] gem update cocoapods and try again.
                       """
 
@@ -200,14 +200,33 @@ init = (projName, interfaceName) ->
       'project.clj',
       [
         [projNameHyphRx, projNameHyph]
-        [/\$REACT_INTERFACE\$/, reactInterfaces[interfaceName]]
       ]
 
     corePath = "src/#{projNameUs}/core.clj"
     fs.unlinkSync corePath
-    corePath += 's'
-    exec "cp #{resources}#{interfaceName}.cljs #{corePath}"
-    edit corePath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
+
+    handlersPath = "src/#{projNameUs}/handlers.clj"
+    subsPath = "src/#{projNameUs}/subs.clj"
+    exec "cp #{resources}handlers.cljs #{handlersPath}"
+    exec "cp #{resources}subs.cljs #{subsPath}"
+
+    edit handlersPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
+    edit subsPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
+
+    fs.mkdirSync 'src/cljsjs'
+    exec "echo '(ns cljsjs.react)' > src/cljsjs/react.cljs"
+
+    fs.mkdirSync 'src-android'
+    fs.mkdirSync 'src-ios'
+
+    coreAndroidPath = "src-android/#{projNameUs}/android/core.clj"
+    coreIosPath = "src-ios/#{projNameUs}/ios/core.clj"
+
+    exec "cp #{resources}core-android.cljs #{coreAndroidPath}"
+    edit coreAndroidPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
+
+    exec "cp #{resources}core-ios.cljs #{coreIosPath}"
+    edit coreIosPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
 
     log 'Creating React Native skeleton'
     fs.mkdirSync 'native'
@@ -230,7 +249,6 @@ init = (projName, interfaceName) ->
          require('react-native/local-cli/init')('.', '#{projName}')\"
          "
 
-    exec 'rm -rf android'
     fs.unlinkSync 'index.android.js'
 
     log 'Installing Pod dependencies'
@@ -317,7 +335,7 @@ init = (projName, interfaceName) ->
     log "cd #{projNameHyph}", 'inverse'
     log ''
     log 'Boot the REPL by typing:', 'yellow'
-    log 'natal repl', 'inverse'
+    log 're-natal repl', 'inverse'
     log ''
     log 'At the REPL prompt type this:', 'yellow'
     log "(in-ns '#{projNameHyph}.core)", 'inverse'
@@ -355,7 +373,7 @@ launch = ({name, device}) ->
     fs.statSync 'native/node_modules'
     fs.statSync 'native/ios/Pods'
   catch
-    logErr 'Dependencies are missing. Run natal deps to install them.'
+    logErr 'Dependencies are missing. Run re-natal deps to install them.'
 
   log 'Compiling ClojureScript'
   exec 'lein cljsbuild once dev'
@@ -444,7 +462,7 @@ startRepl = (name, autoChoose) ->
     logErr message
 
 
-cli._name = 'natal'
+cli._name = 're-natal'
 cli.version pkgJson.version
 
 cli.command 'init <name>'
@@ -461,9 +479,9 @@ cli.command 'init <name>'
 
     if typeof name isnt 'string'
       logErr '''
-             natal init requires a project name as the first argument.
+             re-natal init requires a project name as the first argument.
              e.g.
-             natal init HelloWorld
+             re-natal init HelloWorld
              '''
 
     ensureFreePort -> init name, interfaceName
@@ -494,7 +512,7 @@ cli.command 'setdevice <index>'
   .description 'choose simulator device by index'
   .action (index) ->
     unless device = getDeviceList()[parseInt index, 10]
-      logErr 'Invalid device index. Run natal listdevices for valid indexes.'
+      logErr 'Invalid device index. Run re-natal listdevices for valid indexes.'
 
     config = readConfig()
     config.device = pluckUuid device
@@ -522,12 +540,12 @@ cli.command 'deps'
 
 
 cli.on '*', (command) ->
-  logErr "unknown command #{command[0]}. See natal --help for valid commands"
+  logErr "unknown command #{command[0]}. See re-natal --help for valid commands"
 
 
 unless semver.satisfies process.version[1...], nodeVersion
   logErr """
-         Natal requires Node.js version #{nodeVersion}
+         Re-Natal requires Node.js version #{nodeVersion}
          You have #{process.version[1...]}
          """
 
