@@ -20,7 +20,6 @@ validNameRx     = /^[A-Z][0-9A-Z]*$/i
 camelRx         = /([a-z])([A-Z])/g
 projNameRx      = /\$PROJECT_NAME\$/g
 projNameHyphRx  = /\$PROJECT_NAME_HYPHENATED\$/g
-rnVersion       = '0.14.2'
 rnPackagerPort  = 8081
 podMinVersion   = '0.38.2'
 process.title   = 're-natal'
@@ -205,8 +204,8 @@ init = (projName, interfaceName) ->
     corePath = "src/#{projNameUs}/core.clj"
     fs.unlinkSync corePath
 
-    handlersPath = "src/#{projNameUs}/handlers.clj"
-    subsPath = "src/#{projNameUs}/subs.clj"
+    handlersPath = "src/#{projNameUs}/handlers.cljs"
+    subsPath = "src/#{projNameUs}/subs.cljs"
     exec "cp #{resources}handlers.cljs #{handlersPath}"
     exec "cp #{resources}subs.cljs #{subsPath}"
 
@@ -217,12 +216,14 @@ init = (projName, interfaceName) ->
     exec "echo '(ns cljsjs.react)' > src/cljsjs/react.cljs"
 
     fs.mkdirSync 'src-android'
-    fs.mkdirSync 'src-ios'
+    fs.mkdirSync "src-android/#{projNameUs}"
     fs.mkdirSync "src-android/#{projNameUs}/android"
-    fs.mkdirSync "src-android/#{projNameUs}/ios"
+    fs.mkdirSync 'src-ios'
+    fs.mkdirSync "src-ios/#{projNameUs}"
+    fs.mkdirSync "src-ios/#{projNameUs}/ios"
 
-    coreAndroidPath = "src-android/#{projNameUs}/android/core.clj"
-    coreIosPath = "src-ios/#{projNameUs}/ios/core.clj"
+    coreAndroidPath = "src-android/#{projNameUs}/android/core.cljs"
+    coreIosPath = "src-ios/#{projNameUs}/ios/core.cljs"
 
     exec "cp #{resources}core-android.cljs #{coreAndroidPath}"
     edit coreAndroidPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
@@ -231,26 +232,12 @@ init = (projName, interfaceName) ->
     edit coreIosPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
 
     log 'Creating React Native skeleton'
-    fs.mkdirSync 'native'
+
+    exec "react-native init #{projName}"
+
+    exec "mv #{projName} native"
+
     process.chdir 'native'
-
-    fs.writeFileSync 'package.json', JSON.stringify
-      name:    projName
-      version: '0.0.1'
-      private: true
-      scripts:
-        start: 'node_modules/react-native/packager/packager.sh'
-      dependencies:
-        'react-native': rnVersion
-    , null, 2
-
-    exec 'npm i'
-    exec "
-         node -e
-         \"process.argv[3]='#{projName}';
-         require('react-native/local-cli/init')('.', '#{projName}')\"
-         "
-
     fs.unlinkSync 'index.android.js'
 
     log 'Installing Pod dependencies'

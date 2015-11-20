@@ -172,7 +172,7 @@ RCT_EXPORT_MODULE()
 
 -(void)requireAppNamespaces:(JSContext*)context
 {
-  [context evaluateScript:[NSString stringWithFormat:@"goog.require('%@');", [self munge:@"$PROJECT_NAME_HYPHENATED$.core"]]];
+  [context evaluateScript:[NSString stringWithFormat:@"goog.require('%@');", [self munge:@"$PROJECT_NAME_HYPHENATED$.ios.core"]]];
 }
 
 - (JSValue*)getValue:(NSString*)name inNamespace:(NSString*)namespace fromContext:(JSContext*)context
@@ -225,11 +225,11 @@ RCT_EXPORT_MODULE()
   JSContext* context = [JSContext contextWithJSGlobalContextRef:self.contextManager.context];
   [self requireAppNamespaces:context];
 
-  JSValue* initFn = [self getValue:@"init" inNamespace:@"$PROJECT_NAME_HYPHENATED$.core" fromContext:context];
+  JSValue* initFn = [self getValue:@"init" inNamespace:@"$PROJECT_NAME_HYPHENATED$.ios.core" fromContext:context];
   NSAssert(!initFn.isUndefined, @"Could not find the app init function");
   [initFn callWithArguments:@[]];
 
-  // Send a nonsense UI event to cause React Native to load our Om UI
+  // Send a nonsense UI event to cause React Native to load our Reagent UI
   RCTRootView* rootView = (RCTRootView*)self.window.rootViewController.view;
   [rootView.bridge.modules[@"RCTEventDispatcher"] sendInputEventWithName:@"dummy" body:@{@"target": @1}];
 

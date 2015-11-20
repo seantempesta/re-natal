@@ -1,8 +1,8 @@
 (ns $PROJECT_NAME_HYPHENATED$.android.core
   (:require [reagent.core :as r :refer [atom]]
             [re-frame.core :refer [subscribe dispatch dispatch-sync]]
-            [commutewise-app.handlers]
-            [commutewise-app.subs]))
+            [$PROJECT_NAME_HYPHENATED$.handlers]
+            [$PROJECT_NAME_HYPHENATED$.subs]))
 
 (set! js/React (js/require "react-native"))
 

@@ -1,10 +1,10 @@
 (ns $PROJECT_NAME_HYPHENATED$.ios.core
   (:require [reagent.core :as r :refer [atom]]
             [re-frame.core :refer [subscribe dispatch dispatch-sync]]
-            [commutewise-app.handlers]
-            [commutewise-app.subs]))
+            [$PROJECT_NAME_HYPHENATED$.handlers]
+            [$PROJECT_NAME_HYPHENATED$.subs]))
 
-(set! js/React (js/require "react-native"))
+(set! js/React (js/require "react-native/Libraries/react-native/react-native.js"))
 
 (def text (r/adapt-react-class (.-Text js/React)))
 (def view (r/adapt-react-class (.-View js/React)))
