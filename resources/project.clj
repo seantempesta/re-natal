@@ -7,7 +7,7 @@
                  [org.clojure/clojurescript "1.7.145"]
                  [$REACT_INTERFACE$]
                  [org.omcljs/ambly "0.6.0"]
-                 [natal-shell "0.1.0"]]
+                 ]
  :plugins [[lein-cljsbuild "1.1.0"]]
  :cljsbuild {:builds {:dev {:source-paths ["src"]
                             :compiler {:output-to "target/out/main.js"
