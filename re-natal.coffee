@@ -218,6 +218,8 @@ init = (projName, interfaceName) ->
 
     fs.mkdirSync 'src-android'
     fs.mkdirSync 'src-ios'
+    fs.mkdirSync "src-android/#{projNameUs}/android"
+    fs.mkdirSync "src-android/#{projNameUs}/ios"
 
     coreAndroidPath = "src-android/#{projNameUs}/android/core.clj"
     coreIosPath = "src-ios/#{projNameUs}/ios/core.clj"
