@@ -7,7 +7,7 @@
 
 This project is a fork of [dmotz/natal](https://github.com/dmotz/natal) with
 the goal of generating skeleton of native app for iOS and Android based on
-[Reagent](https://github.com/reagent-project/reagent)and[re-frame](https://github.com/Day8/re-frame).
+[Reagent](https://github.com/reagent-project/reagent) and [re-frame](https://github.com/Day8/re-frame).
 
 Re-Natal is a simple command-line utility that automates most of the process of
 setting up a React Native app running on ClojureScript with Reagent an re-frame.
@@ -25,7 +25,7 @@ Generated project works in iOS and Android devices.
 Before getting started, make sure you have the
 [required dependencies](#dependencies) installed.
 
-Install[React Native](https://facebook.github.io/react-native/docs/getting-started.html#content)CLI:
+Install [React Native](https://facebook.github.io/react-native/docs/getting-started.html#content) CLI:
 ```
 npm install -g react-native-cli
 ```
@@ -57,7 +57,7 @@ $ re-natal repl
 ```
 
 If there are no issues, the REPL should connect to the simulator automatically.
-To manually choose which device it connects to, you can run `natal repl --choose`.
+To manually choose which device it connects to, you can run `re-natal repl --choose`.
 
 At the prompt, try loading your app's namespace:
 
@@ -91,7 +91,7 @@ $ cd future-app
 $ re-natal run-android
 ```
 This will build and run app in Android
-using[React Native](https://facebook.github.io/react-native/docs/getting-started.html#content)CLI.
+using [React Native](https://facebook.github.io/react-native/docs/getting-started.html#content) CLI.
 
 To enable "live coding"
 bring up the menu in Android app, go to "Dev Settings" and enable
@@ -119,14 +119,14 @@ See [this issue](https://github.com/omcljs/ambly/issues/97) in Ambly for details
 Packager so try to avoid doing so.
 
 - You can launch your app on the simulator without opening Xcode by running
-`natal launch` in your app's root directory.
+`re-natal launch` in your app's root directory.
 
 - By default new Natal projects will launch on the iPhone 6 simulator. To change
-which device `natal launch` uses, you can run `natal listdevices` to see a list
-of available simulators, then select one by running `natal setdevice` with the
+which device `re-natal launch` uses, you can run `re-natal listdevices` to see a list
+of available simulators, then select one by running `re-natal setdevice` with the
 index of the device on the list.
 
-- To change advanced settings run `natal xcode` to quickly open the Xcode project.
+- To change advanced settings run `re-natal xcode` to quickly open the Xcode project.
 
 - The Xcode-free workflow is for convenience. If you're encountering app crashes,
 you should open the Xcode project and run it from there to view errors.
