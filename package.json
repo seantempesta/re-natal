@@ -3,11 +3,7 @@
   "version": "0.1.7",
   "description": "Bootstrap ClojureScript React Native apps with reagent and re-frame for iOS and Android",
   "main": "index.js",
-  "author": {
-    "name": "Dan Motzenbecker",
-    "url": "http://oxism.com",
-    "email": "dan@oxism.com"
-  },
+  "author": "Artur Girenko <a.girenko@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "chalk": "^1.1.1",
@@ -37,5 +33,11 @@
     "android",
     "reagent",
     "re-frame"
-  ]
+  ],
+  "bugs": {
+    "url": "https://github.com/drapanjanas/re-natal/issues"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
 }

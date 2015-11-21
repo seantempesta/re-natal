@@ -1,11 +1,11 @@
 # Re-Natal
 ### Bootstrap ClojureScript-based React Native apps with Reagent and re-frame
-[Dan Motzenbecker](http://oxism.com), MIT License
-[@dcmotz](https://twitter.com/dcmotz)
+Artur Girenko, MIT License
+[@drapanjanas](https://twitter.com/drapanjanas)
 
 ---
 
-This project is a fork of [dmotz/natal](https://github.com/dmotz/natal) with
+This project is a fork of [dmotz/natal](https://github.com/dmotz/natal) by Dan Motzenbecker with
 the goal of generating skeleton of native app for iOS and Android based on
 [Reagent](https://github.com/reagent-project/reagent) and [re-frame](https://github.com/Day8/re-frame).
 
