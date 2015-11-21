@@ -23,16 +23,7 @@ projNameHyphRx  = /\$PROJECT_NAME_HYPHENATED\$/g
 rnPackagerPort  = 8081
 podMinVersion   = '0.38.2'
 process.title   = 're-natal'
-reactInterfaces =
-  om:        'org.omcljs/om "0.9.0"'
-  'om-next': 'org.omcljs/om "1.0.0-alpha14"'
-
-interfaceNames   = Object.keys reactInterfaces
-defaultInterface = 'om'
-sampleCommands   =
-  om:        '(swap! app-state assoc :text "Hello Native World")'
-  'om-next': '(swap! app-state assoc :app/msg "Hello Native World")'
-
+sampleCommand  = '(re-frame.core/dispatch [:set-greeting "Hello Native World!"])'
 
 log = (s, color = 'green') ->
   console.log chalk[color] s
@@ -163,7 +154,7 @@ getBundleId = (name) ->
     logErr message
 
 
-init = (projName, interfaceName) ->
+init = (projName) ->
   if projName.toLowerCase() is 'react' or !projName.match validNameRx
     logErr 'Invalid project name. Use an alphanumeric CamelCase name.'
 
@@ -327,12 +318,12 @@ init = (projName, interfaceName) ->
     log 're-natal repl', 'inverse'
     log ''
     log 'At the REPL prompt type this:', 'yellow'
-    log "(in-ns '#{projNameHyph}.core)", 'inverse'
+    log "(in-ns '#{projNameHyph}.ios.core)", 'inverse'
     log ''
     log 'Changes you make via the REPL or by changing your .cljs files should appear live.', 'yellow'
     log ''
     log 'Try this command as an example:', 'yellow'
-    log sampleCommands[interfaceName], 'inverse'
+    log sampleCommand, 'inverse'
     log ''
     log '✔ Done', 'bgMagenta'
     log ''
@@ -383,6 +374,12 @@ launch = ({name, device}) ->
   catch {message}
     logErr message
 
+runAndroid = ->
+  log 'Compiling ClojureScript'
+  exec 'lein cljsbuild once android'
+  process.chdir 'native'
+  log 'Running application in running Android simulator or connected device'
+  exec 'react-native run-android'
 
 openXcode = (name) ->
   try
@@ -456,16 +453,7 @@ cli.version pkgJson.version
 
 cli.command 'init <name>'
   .description 'create a new ClojureScript React Native project'
-  .option "-i, --interface [#{interfaceNames.join ' '}]", 'specify React interface'
-  .action (name, cmd) ->
-    if cmd
-      interfaceName = cmd['interface'] or defaultInterface
-    else
-      interfaceName = defaultInterface
-
-    unless reactInterfaces[interfaceName]
-      logErr "Unsupported React interface: #{interfaceName}"
-
+  .action (name) ->
     if typeof name isnt 'string'
       logErr '''
              re-natal init requires a project name as the first argument.
@@ -473,14 +461,19 @@ cli.command 'init <name>'
              re-natal init HelloWorld
              '''
 
-    ensureFreePort -> init name, interfaceName
+    ensureFreePort -> init name
 
 
 cli.command 'launch'
-  .description 'compile project and run in simulator'
+  .description 'compile project and run in iOS simulator'
   .action ->
     ensureFreePort -> launch readConfig()
 
+cli.command 'run-android'
+  .description 'compile project and run in Android simulator or connected device'
+  .action ->
+
+    runAndroid()
 
 cli.command 'repl'
   .description 'launch a ClojureScript REPL with background compilation'

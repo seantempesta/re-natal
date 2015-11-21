@@ -62,7 +62,7 @@ To manually choose which device it connects to, you can run `natal repl --choose
 At the prompt, try loading your app's namespace:
 
 ```clojure
-(in-ns 'future-app.core)
+(in-ns 'future-app.ios.core)
 ```
 
 Changes you make via the REPL or by changing your `.cljs` files should appear live
@@ -71,7 +71,7 @@ in the simulator.
 Try this command as an example:
 
 ```clojure
-(swap! app-state assoc :text "Hello Native World")
+(re-frame.core/dispatch [:set-greeting "Hello Native World!"])
 ```
 
 When the REPL connects to the simulator it will print the location of its
@@ -83,15 +83,17 @@ $ tail -f /Volumes/Ambly-81C53995/watch.log
 
 ## Running in Android
 
-Connect your device or start a simulator
+Connect start Android simulator or connect your device.
+Close React packager window of iOS app, if running.
 
 ```
 $ cd future-app
 $ re-natal run-android
 ```
-This will build and run app in Android.
+This will build and run app in Android
+using[React Native](https://facebook.github.io/react-native/docs/getting-started.html#content)CLI.
 
-To enable live coding
+To enable "live coding"
 bring up the menu in Android app, go to "Dev Settings" and enable
 "Auto reload on JS change"
 
@@ -100,6 +102,11 @@ Then run Leiningen build
 $ lein cljsbuild auto android
 ```
 Changes in .cljs files should be reflected in running application.
+
+Current limitation that this will reload whole application meaning the app-db
+will be restored to initial state
+
+The REPL in android is not available... Contributions are welcome.
 
 ## Tips
 - Having `rlwrap` installed is optional but highly recommended since it makes
@@ -150,7 +157,7 @@ tools.
 - [ ] Automatically tail cljs build log and report compile errors
 - [ ] Working dev tools
 - [ ] Automatic bundling for offline device usage and App Store distribution
-- [ ] Android support
+- [x] Android support
 
 
 Contributions are welcome.
