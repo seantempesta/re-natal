@@ -1,8 +1,7 @@
 # Re-Natal
-### Bootstrap ClojureScript-based React Native apps with reagent and re-frame
+### Bootstrap ClojureScript-based React Native apps with Reagent and re-frame
 [Dan Motzenbecker](http://oxism.com), MIT License
-[@dcmotz](https://twitter.com/dcmotz),
-[@drapanjanas](https://twitter.com/drapanjanas)
+[@dcmotz](https://twitter.com/dcmotz)
 
 ---
 
@@ -11,7 +10,7 @@ the goal of generating skeleton of native app for iOS and Android based on
 [Reagent](https://github.com/reagent-project/reagent)and[re-frame](https://github.com/Day8/re-frame).
 
 Re-Natal is a simple command-line utility that automates most of the process of
-setting up a React Native app running on ClojureScript wit reagent an re-frame.
+setting up a React Native app running on ClojureScript with Reagent an re-frame.
 
 It stands firmly on the shoulders of giants, specifically those of
 [Mike Fikes](http://blog.fikesfarm.com) who created
@@ -19,12 +18,17 @@ It stands firmly on the shoulders of giants, specifically those of
 [documentation](http://cljsrn.org/ambly.html)
 on setting up a ClojureScript React Native app.
 
-Generated project will work in iOS as well as on Android devices.
+Generated project works in iOS and Android devices.
 
 ## Usage
 
 Before getting started, make sure you have the
 [required dependencies](#dependencies) installed.
+
+Install[React Native](https://facebook.github.io/react-native/docs/getting-started.html#content)CLI:
+```
+npm install -g react-native-cli
+```
 
 Then, install the CLI using npm:
 
@@ -41,7 +45,7 @@ $ re-natal init FutureApp
 If your app's name is more than a single word, be sure to type it in CamelCase.
 A corresponding hyphenated Clojure namespace will be created.
 
-By default Natal will create a simple skeleton based on the current
+Re-Natal will create a simple skeleton based on the current
 version of [Reagent](https://github.com/reagent-project/reagent) and [Day8/re-frame](https://github.com/Day8/re-frame).
 If all goes well your app should compile and boot in the iOS simulator.
 
@@ -77,6 +81,25 @@ compilation log. It's useful to tail it to see any errors, like so:
 $ tail -f /Volumes/Ambly-81C53995/watch.log
 ```
 
+## Running in Android
+
+Connect your device or start a simulator
+
+```
+$ cd future-app
+$ re-natal run-android
+```
+This will build and run app in Android.
+
+To enable live coding
+bring up the menu in Android app, go to "Dev Settings" and enable
+"Auto reload on JS change"
+
+Then run Leiningen build
+```
+$ lein cljsbuild auto android
+```
+Changes in .cljs files should be reflected in running application.
 
 ## Tips
 - Having `rlwrap` installed is optional but highly recommended since it makes
@@ -122,7 +145,7 @@ tools.
 ## Aspirations
 - [x] Xcode-free workflow with CLI tools
 - [x] Templates for other ClojureScript React wrappers
-- [x] Automatic wrapping of all React Native component functions for ClojureScript
+- [ ] Automatic wrapping of all React Native component functions for ClojureScript
 - [ ] Automatically run React packager in background
 - [ ] Automatically tail cljs build log and report compile errors
 - [ ] Working dev tools
