@@ -25,11 +25,6 @@ Generated project works in iOS and Android devices.
 Before getting started, make sure you have the
 [required dependencies](#dependencies) installed.
 
-Install [React Native](https://facebook.github.io/react-native/docs/getting-started.html#content) CLI:
-```
-npm install -g react-native-cli
-```
-
 Then, install the CLI using npm:
 
 ```
@@ -71,7 +66,7 @@ in the simulator.
 Try this command as an example:
 
 ```clojure
-(re-frame.core/dispatch [:set-greeting "Hello Native World!"])
+(dispatch [:set-greeting "Hello Native World!"])
 ```
 
 When the REPL connects to the simulator it will print the location of its
@@ -104,7 +99,7 @@ $ lein cljsbuild auto android
 Changes in .cljs files should be reflected in running application.
 
 Current limitation that this will reload whole application meaning the app-db
-will be restored to initial state
+will be restored to initial state.
 
 The REPL in android is not available... Contributions are welcome.
 

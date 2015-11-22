@@ -20,10 +20,11 @@ validNameRx     = /^[A-Z][0-9A-Z]*$/i
 camelRx         = /([a-z])([A-Z])/g
 projNameRx      = /\$PROJECT_NAME\$/g
 projNameHyphRx  = /\$PROJECT_NAME_HYPHENATED\$/g
+rnVersion       = '0.13.0'
 rnPackagerPort  = 8081
 podMinVersion   = '0.38.2'
 process.title   = 're-natal'
-sampleCommand  = '(re-frame.core/dispatch [:set-greeting "Hello Native World!"])'
+sampleCommand  = '(dispatch [:set-greeting "Hello Native World!"])'
 
 log = (s, color = 'green') ->
   console.log chalk[color] s
@@ -206,15 +207,11 @@ init = (projName) ->
     fs.mkdirSync 'src/cljsjs'
     exec "echo '(ns cljsjs.react)' > src/cljsjs/react.cljs"
 
-    fs.mkdirSync 'src-android'
-    fs.mkdirSync "src-android/#{projNameUs}"
-    fs.mkdirSync "src-android/#{projNameUs}/android"
-    fs.mkdirSync 'src-ios'
-    fs.mkdirSync "src-ios/#{projNameUs}"
-    fs.mkdirSync "src-ios/#{projNameUs}/ios"
+    fs.mkdirSync "src/#{projNameUs}/android"
+    fs.mkdirSync "src/#{projNameUs}/ios"
 
-    coreAndroidPath = "src-android/#{projNameUs}/android/core.cljs"
-    coreIosPath = "src-ios/#{projNameUs}/ios/core.cljs"
+    coreAndroidPath = "src/#{projNameUs}/android/core.cljs"
+    coreIosPath = "src/#{projNameUs}/ios/core.cljs"
 
     exec "cp #{resources}core-android.cljs #{coreAndroidPath}"
     edit coreAndroidPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
@@ -223,12 +220,26 @@ init = (projName) ->
     edit coreIosPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
 
     log 'Creating React Native skeleton'
-
-    exec "react-native init #{projName}"
-
-    exec "mv #{projName} native"
-
+    fs.mkdirSync 'native'
     process.chdir 'native'
+
+    fs.writeFileSync 'package.json', JSON.stringify
+      name:    projName
+      version: '0.0.1'
+      private: true
+      scripts:
+        start: 'node_modules/react-native/packager/packager.sh'
+      dependencies:
+        'react-native': rnVersion
+    , null, 2
+
+    exec 'npm i'
+    exec "
+           node -e
+           \"process.argv[3]='#{projName}';
+           require('react-native/local-cli/init')('.', '#{projName}')\"
+           "
+
     fs.unlinkSync 'index.android.js'
 
     log 'Installing Pod dependencies'
@@ -437,7 +448,7 @@ startRepl = (name, autoChoose) ->
             :watch-fn
               (fn []
                 (cljs.repl/load-file repl-env
-                  \"src/#{toUnderscored name}/core.cljs\"))
+                  \"src/#{toUnderscored name}/ios/core.cljs\"))
             :analyze-path \"src\"))
           """),
       cwd:   process.cwd()
