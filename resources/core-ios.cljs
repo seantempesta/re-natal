@@ -6,6 +6,7 @@
 
 (set! js/React (js/require "react-native/Libraries/react-native/react-native.js"))
 
+(def app-registry (.-AppRegistry js/React))
 (def text (r/adapt-react-class (.-Text js/React)))
 (def view (r/adapt-react-class (.-View js/React)))
 (def image (r/adapt-react-class (.-Image js/React)))
@@ -21,9 +22,7 @@
        [touchable-highlight {:style {:backgroundColor "#999" :padding 10 :borderRadius 5}}
         [text {:style {:color "white" :textAlign "center" :fontWeight "bold"}} "press me"]]])))
 
-(r/render [widget] 1)
-
-(defn ^:export init []
-  (dispatch-sync [:initialize-db])
-  ((fn render []
-     (.requestAnimationFrame js/window render))))
+(.registerRunnable app-registry "$PROJECT_NAME$"
+                   (fn [params]
+                       (dispatch-sync [:initialize-db])
+                       (r/render [widget] (.-rootTag params))))

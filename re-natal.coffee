@@ -219,9 +219,7 @@ init = (projName) ->
     exec "cp #{resources}core-ios.cljs #{coreIosPath}"
     edit coreIosPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
 
-    log 'Creating React Native skeleton'
-    fs.mkdirSync 'native'
-    process.chdir 'native'
+    log 'Creating React Native skeleton. Relax, this takes a while...'
 
     fs.writeFileSync 'package.json', JSON.stringify
       name:    projName
@@ -234,91 +232,19 @@ init = (projName) ->
     , null, 2
 
     exec 'npm i'
+
+    fs.unlinkSync '.gitignore'
     exec "
            node -e
            \"require('react-native/local-cli/cli').init('.', '#{projName}')\"
            "
 
     fs.unlinkSync 'index.android.js'
+    fs.unlinkSync 'index.ios.js'
 
-    log 'Installing Pod dependencies'
-    process.chdir 'ios'
-    exec "cp #{resources}Podfile ."
-    exec 'pod install'
-
-    log 'Updating Xcode project'
-    for ext in ['m', 'h']
-      path = "#{projName}/AppDelegate.#{ext}"
-      exec "cp #{resources}AppDelegate.#{ext} #{path}"
-      edit path, [[projNameRx, projName], [projNameHyphRx, projNameHyph]]
-
-    uuid1 = crypto
-      .createHash 'md5'
-      .update projName, 'utf8'
-      .digest('hex')[...24]
-      .toUpperCase()
-
-    uuid2 = uuid1.split ''
-    uuid2.splice 7, 1, ((parseInt(uuid1[7], 16) + 1) % 16).toString(16).toUpperCase()
-    uuid2 = uuid2.join ''
-
-    edit \
-      "#{projName}.xcodeproj/project.pbxproj",
-      [
-        [
-          /OTHER_LDFLAGS = "-ObjC";/g
-          'OTHER_LDFLAGS = "${inherited}";'
-        ]
-        [
-          /\/\* End PBXBuildFile section \*\//
-          "\t\t#{uuid2} /* out in Resources */ =
-           {isa = PBXBuildFile; fileRef = #{uuid1} /* out */; };
-           \n/* End PBXBuildFile section */"
-        ]
-        [
-          /\/\* End PBXFileReference section \*\//
-          "\t\t#{uuid1} /* out */ = {isa = PBXFileReference; lastKnownFileType
-           = folder; name = out; path = ../../target/out;
-           sourceTree = \"<group>\"; };\n/* End PBXFileReference section */"
-        ]
-        [
-          /main.jsbundle \*\/\,/
-          "main.jsbundle */,\n\t\t\t\t#{uuid1} /* out */,"
-        ]
-        [
-          /\/\* LaunchScreen.xib in Resources \*\/\,/
-          "/* LaunchScreen.xib in Resources */,
-           \n\t\t\t\t#{uuid2} /* out in Resources */,"
-        ]
-      ]
-
-    testId = readFile("#{projName}.xcodeproj/project.pbxproj")
-      .match(new RegExp "([0-9A-F]+) \/\\* #{projName}Tests \\*\/ = \\{")[1]
-
-    edit \
-      "#{projName}.xcodeproj/xcshareddata/xcschemes/#{projName}.xcscheme",
-      [
-        [
-          /\<Testables\>\n\s*\<\/Testables\>/
-          """
-          <Testables>
-             <TestableReference
-                skipped = "NO">
-                <BuildableReference
-                   BuildableIdentifier = "primary"
-                   BlueprintIdentifier = "#{testId}"
-                   BuildableName = "#{projName}Tests.xctest"
-                   BlueprintName = "#{projName}Tests"
-                   ReferencedContainer = "container:#{projName}.xcodeproj">
-                </BuildableReference>
-             </TestableReference>
-          </Testables>
-          """
-        ]
-      ]
-
-    process.chdir '../..'
-    launch generateConfig projName
+    log 'Compiling ClojureScript'
+    exec 'lein cljsbuild once dev'
+    exec 'lein cljsbuild once android'
 
     log ''
     log 'To get started with your new app, first cd into its directory:', 'yellow'
