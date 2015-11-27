@@ -9,16 +9,20 @@ This project is a fork of [dmotz/natal](https://github.com/dmotz/natal) by Dan M
 the goal of generating skeleton of native app for iOS and Android based on
 [Reagent](https://github.com/reagent-project/reagent) and [re-frame](https://github.com/Day8/re-frame).
 
+The support of figwheel is based on solution developed by [decker405/figwheel-react-native](https://github.com/decker405/figwheel-react-native)
+
 Re-Natal is a simple command-line utility that automates most of the process of
 setting up a React Native app running on ClojureScript with Reagent an re-frame.
 
-It stands firmly on the shoulders of giants, specifically those of
-[Mike Fikes](http://blog.fikesfarm.com) who created
-[Ambly](https://github.com/omcljs/ambly) and the
-[documentation](http://cljsrn.org/ambly.html)
-on setting up a ClojureScript React Native app.
-
 Generated project works in iOS and Android devices.
+
+## State
+- Same codebase for iOS and Android
+- Figwheel used for REPL and live coding
+- For Android figwheel does not work yet, but auto-compile and reload works fast
+- Figwheel is only working in "Debug in Chrome" mode
+- You can reload app any time, no problem.
+- Compiler with optimizations :simple is
 
 ## Usage
 
@@ -42,19 +46,46 @@ A corresponding hyphenated Clojure namespace will be created.
 
 Re-Natal will create a simple skeleton based on the current
 version of [Reagent](https://github.com/reagent-project/reagent) and [Day8/re-frame](https://github.com/Day8/re-frame).
-If all goes well your app should compile and boot in the iOS simulator.
-
-From there you can begin an interactive workflow by starting the REPL.
+If all goes well you should see printed out basic instructions how to run in iOS simulator.
 
 ```
 $ cd future-app
-$ re-natal repl
+```
+To run in iOS:
+```
+$ cd re-natal xcode
+```
+and then run your app from Xcode normally.
+
+To run in Android, run your simulator first or connect device and:
+```
+$ react-native run-android
 ```
 
-If there are no issues, the REPL should connect to the simulator automatically.
-To manually choose which device it connects to, you can run `re-natal repl --choose`.
+Initially the ClojureScript is compiled in "prod" profile, meaning `index.*.js` files
+are compiled with `optimizations :simple`.
+Development in such mode is not fun because of slow compilation and long reload time.
 
-At the prompt, try loading your app's namespace:
+Luckily, this can be improved by compiling with `optimizations :none` and using
+figwheel (unfortunately not working in Android yet)
+
+To start development in `optimizations :none` mode you have to start "Debug in Chrome"
+in your React Native application.
+
+Then execute commands:
+```
+$ re-natal use-figwheel
+$ lein figwheel ios
+or
+$ re-natal use-reload
+$ lein cljsbuild auto android
+```
+This will generate index.ios.js and index.android.js to make `optimizations :none` possible.
+
+You have to reload your app,
+and if you have used figwheel the REPL should come up with prompt.
+
+At the REPL prompt, try loading your app's namespace:
 
 ```clojure
 (in-ns 'future-app.ios.core)
@@ -69,46 +100,17 @@ Try this command as an example:
 (dispatch [:set-greeting "Hello Native World!"])
 ```
 
-When the REPL connects to the simulator it will print the location of its
-compilation log. It's useful to tail it to see any errors, like so:
-
+## "Prod" build
+Do this with command:
 ```
-$ tail -f /Volumes/Ambly-81C53995/watch.log
+$ lein prod-build
 ```
-
-## Running in Android
-
-Connect start Android simulator or connect your device.
-Close React packager window of iOS app, if running.
-
-```
-$ cd future-app
-$ re-natal run-android
-```
-This will build and run app in Android
-using [React Native](https://facebook.github.io/react-native/docs/getting-started.html#content) CLI.
-
-To enable "live coding"
-bring up the menu in Android app, go to "Dev Settings" and enable
-"Auto reload on JS change"
-
-Then run Leiningen build
-```
-$ lein cljsbuild auto android
-```
-Changes in .cljs files should be reflected in running application.
-
-Current limitation that this will reload whole application meaning the app-db
-will be restored to initial state.
-
-The REPL in android is not available... Contributions are welcome.
+It will clean and rebuild index.ios.js and index.android.js with `optimizations :simple`
+After this you can reload the app exit "Debug in Chrome".
 
 ## Tips
 - Having `rlwrap` installed is optional but highly recommended since it makes
 the REPL a much nicer experience with arrow keys.
-
-- Don't press ⌘-R in the simulator; code changes should be reflected automatically.
-See [this issue](https://github.com/omcljs/ambly/issues/97) in Ambly for details.
 
 - Running multiple React Native apps at once can cause problems with the React
 Packager so try to avoid doing so.
@@ -128,7 +130,7 @@ you should open the Xcode project and run it from there to view errors.
 
 
 ## Dependencies
-As Natal is the orchestration of many individual tools, there are quite a few dependencies.
+As Re-Natal is the orchestration of many individual tools, there are quite a few dependencies.
 If you've previously done React Native or Clojure development, you should hopefully
 have most installed already. Platform dependencies are listed under their respective
 tools.
@@ -137,8 +139,6 @@ tools.
     - [Node.js](https://nodejs.org) `>=4.0.0`
 - [Leiningen](http://leiningen.org) `>=2.5.3`
     - [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
-- [CocoaPods](https://cocoapods.org) `>=0.38.2`
-    - [Ruby](https://www.ruby-lang.org) `>=2.0.0`
 - [Xcode](https://developer.apple.com/xcode) (+ Command Line Tools) `>=6.3`
     - [OS X](http://www.apple.com/osx) `>=10.10`
 - [Watchman](https://facebook.github.io/watchman) `>=3.7.0`
