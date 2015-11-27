@@ -1,4 +1,6 @@
 /*
+ * Originally taken from https://github.com/decker405/figwheel-react-native
+ *
  * @providesModule figwheel-bridge
  */
 
