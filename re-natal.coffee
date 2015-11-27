@@ -20,6 +20,8 @@ validNameRx     = /^[A-Z][0-9A-Z]*$/i
 camelRx         = /([a-z])([A-Z])/g
 projNameRx      = /\$PROJECT_NAME\$/g
 projNameHyphRx  = /\$PROJECT_NAME_HYPHENATED\$/g
+projNameUsRx    = /\$PROJECT_NAME_UNDERSCORED\$/g
+platformRx      = /\$PLATFORM\$/g
 rnVersion       = '0.14.2'
 rnPackagerPort  = 8081
 podMinVersion   = '0.38.2'
@@ -133,12 +135,12 @@ readConfig = ->
 
 getBundleId = (name) ->
   try
-    if line = readFile "native/ios/#{name}.xcodeproj/project.pbxproj"
+    if line = readFile "ios/#{name}.xcodeproj/project.pbxproj"
          .match /PRODUCT_BUNDLE_IDENTIFIER = (.+);/
 
       line[1]
 
-    else if line = readFile "native/ios/#{name}/Info.plist"
+    else if line = readFile "ios/#{name}/Info.plist"
               .match /\<key\>CFBundleIdentifier\<\/key\>\n?\s*\<string\>(.+)\<\/string\>/
 
       rfcIdRx = /\$\(PRODUCT_NAME\:rfc1034identifier\)/
@@ -170,16 +172,8 @@ init = (projName) ->
       throw new Error "Directory #{projNameHyph} already exists"
 
     exec 'type lein'
-    exec 'type pod'
     exec 'type watchman'
     exec 'type xcodebuild'
-
-    podVersion = exec('pod --version', true).toString().trim()
-    unless semver.satisfies podVersion, ">=#{podMinVersion}"
-      throw new Error """
-                      Re-Natal requires CocoaPods #{podMinVersion} or higher (you have #{podVersion}).
-                      Run [sudo] gem update cocoapods and try again.
-                      """
 
     log 'Creating Leiningen project'
     exec "lein new #{projNameHyph}"
@@ -213,11 +207,30 @@ init = (projName) ->
     coreAndroidPath = "src/#{projNameUs}/android/core.cljs"
     coreIosPath = "src/#{projNameUs}/ios/core.cljs"
 
-    exec "cp #{resources}core-android.cljs #{coreAndroidPath}"
-    edit coreAndroidPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
+    exec "cp #{resources}core.cljs #{coreAndroidPath}"
+    edit coreAndroidPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"]]
 
-    exec "cp #{resources}core-ios.cljs #{coreIosPath}"
-    edit coreIosPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
+    exec "cp #{resources}core.cljs #{coreIosPath}"
+    edit coreIosPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
+
+    fs.mkdirSync "src/env"
+    fs.mkdirSync "src/env/ios"
+    fs.mkdirSync "src/env/android"
+
+    envIosDevPath = "src/env/ios/dev.cljs"
+    envIosProdPath = "src/env/ios/prod.cljs"
+    envAndroidDevPath = "src/env/android/dev.cljs"
+    envAndroidProdPath = "src/env/android/prod.cljs"
+
+    exec "cp #{resources}dev.cljs #{envIosDevPath}"
+    edit envIosDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
+    exec "cp #{resources}prod.cljs #{envIosProdPath}"
+    edit envIosProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
+    exec "cp #{resources}dev.cljs #{envAndroidDevPath}"
+    edit envAndroidDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"]]
+    exec "cp #{resources}prod.cljs #{envAndroidProdPath}"
+    edit envAndroidProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"]]
+
 
     log 'Creating React Native skeleton. Relax, this takes a while...'
 
@@ -239,19 +252,26 @@ init = (projName) ->
            \"require('react-native/local-cli/cli').init('.', '#{projName}')\"
            "
 
-    fs.unlinkSync 'index.android.js'
-    fs.unlinkSync 'index.ios.js'
+    generateConfig projName
+
+    exec "cp #{resources}figwheel-bridge.js ."
+    edit "figwheel-bridge.js", [[projNameUsRx, projNameUs]]
 
     log 'Compiling ClojureScript'
-    exec 'lein cljsbuild once dev'
-    exec 'lein cljsbuild once android'
+    exec 'lein prod-build'
 
     log ''
     log 'To get started with your new app, first cd into its directory:', 'yellow'
     log "cd #{projNameHyph}", 'inverse'
     log ''
-    log 'Boot the REPL by typing:', 'yellow'
-    log 're-natal repl', 'inverse'
+    log 'Open iOS app in xcode and run it:' , 'yellow'
+    log 're-natal xcode', 'inverse'
+    log ''
+    log 'To use figwheel start "Debug in Chrome" in simulator and type:' , 'yellow'
+    log 're-natal use-figwheel', 'inverse'
+    log 'lein figwheel ios', 'inverse'
+    log ''
+    log 'Reload the app in simulator'
     log ''
     log 'At the REPL prompt type this:', 'yellow'
     log "(in-ns '#{projNameHyph}.ios.core)", 'inverse'
@@ -268,14 +288,12 @@ init = (projName) ->
     logErr \
       if message.match /type.+lein/i
         'Leiningen is required (http://leiningen.org)'
-      else if message.match /type.+pod/i
-        'CocoaPods is required (https://cocoapods.org)'
       else if message.match /type.+watchman/i
         'Watchman is required (https://facebook.github.io/watchman)'
       else if message.match /type.+xcodebuild/i
         'Xcode Command Line Tools are required'
       else if message.match /npm/i
-        "npm install failed. This may be a network issue. Check #{projNameHyph}/native/npm-debug.log for details."
+        "npm install failed. This may be a network issue. Check #{projNameHyph}/npm-debug.log for details."
       else
         message
 
@@ -286,19 +304,18 @@ launch = ({name, device}) ->
     {device} = generateConfig name
 
   try
-    fs.statSync 'native/node_modules'
-    fs.statSync 'native/ios/Pods'
+    fs.statSync 'node_modules'
   catch
-    logErr 'Dependencies are missing. Run re-natal deps to install them.'
+    logErr 'Dependencies are missing. Something went horribly wrong...'
 
   log 'Compiling ClojureScript'
-  exec 'lein cljsbuild once dev'
+  exec 'lein prod-build'
 
   log 'Compiling Xcode project'
   try
     exec "
          xcodebuild
-         -workspace native/ios/#{name}.xcworkspace
+         -project ios/#{name}.xcodeproj
          -scheme #{name}
          -destination platform='iOS Simulator',OS=latest,id='#{device}'
          test
@@ -310,25 +327,18 @@ launch = ({name, device}) ->
   catch {message}
     logErr message
 
-runAndroid = ->
-  log 'Compiling ClojureScript'
-  exec 'lein cljsbuild once android'
-  process.chdir 'native'
-  log 'Running application in running Android simulator or connected device'
-  exec 'react-native run-android'
-
 openXcode = (name) ->
   try
-    exec "open native/ios/#{name}.xcworkspace"
+    exec "open ios/#{name}.xcodeproj"
   catch {message}
     logErr \
       if message.match /ENOENT/i
         """
-        Cannot find #{name}.xcworkspace in native/ios.
+        Cannot find #{name}.xcodeproj in ios.
         Run this command from your project's root directory.
         """
       else if message.match /EACCES/i
-        "Invalid permissions for opening #{name}.xcworkspace in native/ios"
+        "Invalid permissions for opening #{name}.xcodeproj in ios"
       else
         message
 
@@ -347,6 +357,23 @@ getDeviceUuids = ->
   getDeviceList().map (line) -> line.match(/\[(.+)\]/)[1]
 
 
+generateDevScripts = (method) ->
+  try
+    fs.statSync '.re-natal'
+    fs.unlinkSync 'index.android.js'
+    fs.unlinkSync 'index.ios.js'
+
+    fs.writeFileSync 'index.ios.js', "require('react-native');require('figwheel-bridge')."+method+"('ios');", null, 2
+    log 'index.ios.js was regenerated'
+    fs.writeFileSync 'index.android.js', "require('react-native');require('figwheel-bridge')."+method+"('android');", null, 2
+    log 'index.android.js was regenerated'
+  catch {message}
+    logErr \
+      if message.match /EACCES/i
+        'Invalid write permissions for creating development scripts'
+      else
+        message
+
 startRepl = (name, autoChoose) ->
   log 'Starting REPL'
   hasRlwrap =
@@ -362,20 +389,7 @@ startRepl = (name, autoChoose) ->
 
   try
     child.spawn (if hasRlwrap then 'rlwrap' else 'lein'),
-      "#{if hasRlwrap then 'lein ' else ''}trampoline run -m clojure.main -e"
-        .split(' ').concat(
-          """
-          (require '[cljs.repl :as repl])
-          (require '[ambly.core :as ambly])
-          (let [repl-env (ambly.core/repl-env#{if autoChoose then ' :choose-first-discovered true' else ''})]
-          (cljs.repl/repl repl-env
-            :watch \"src\"
-            :watch-fn
-              (fn []
-                (cljs.repl/load-file repl-env
-                  \"src/#{toUnderscored name}/ios/core.cljs\"))
-            :analyze-path \"src\"))
-          """),
+      "#{if hasRlwrap then 'lein ' else ''}figwheel ios",
       cwd:   process.cwd()
       env:   process.env
       stdio: 'inherit'
@@ -405,26 +419,12 @@ cli.command 'launch'
   .action ->
     ensureFreePort -> launch readConfig()
 
-cli.command 'run-android'
-  .description 'compile project and run in Android simulator or connected device'
-  .action ->
-
-    runAndroid()
-
-cli.command 'repl'
-  .description 'launch a ClojureScript REPL with background compilation'
-  .option '-c, --choose', 'choose target device from list'
-  .action (cmd) ->
-    startRepl readConfig().name, !cmd.choose
-
-
 cli.command 'listdevices'
   .description 'list available simulator devices by index'
   .action ->
     console.log (getDeviceList()
       .map (line, i) -> "#{i}\t#{line.replace /\[.+\]/, ''}"
       .join '\n')
-
 
 cli.command 'setdevice <index>'
   .description 'choose simulator device by index'
@@ -436,26 +436,29 @@ cli.command 'setdevice <index>'
     config.device = pluckUuid device
     writeConfig config
 
-
 cli.command 'xcode'
   .description 'open Xcode project'
   .action ->
     openXcode readConfig().name
 
-
 cli.command 'deps'
   .description 'install all dependencies for the project'
   .action ->
     try
-      process.chdir 'native'
       log 'Installing npm packages'
       exec 'npm i'
-      log 'Installing pods'
-      process.chdir 'ios'
-      exec 'pod install'
     catch {message}
       logErr message
 
+cli.command 'use-figwheel'
+  .description 'generate index.ios.js and index.android.js for development with figwheel'
+  .action ->
+    generateDevScripts("figwheel")
+
+cli.command 'use-reload'
+  .description 'generate index.ios.js and index.android.js for development using app reload'
+  .action ->
+    generateDevScripts("start")
 
 cli.on '*', (command) ->
   logErr "unknown command #{command[0]}. See re-natal --help for valid commands"

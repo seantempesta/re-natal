@@ -1,4 +1,4 @@
-(ns $PROJECT_NAME_HYPHENATED$.ios.core
+(ns ^:figwheel-always $PROJECT_NAME_HYPHENATED$.$PLATFORM$.core
   (:require [reagent.core :as r :refer [atom]]
             [re-frame.core :refer [subscribe dispatch dispatch-sync]]
             [$PROJECT_NAME_HYPHENATED$.handlers]
@@ -22,7 +22,9 @@
        [touchable-highlight {:style {:backgroundColor "#999" :padding 10 :borderRadius 5}}
         [text {:style {:color "white" :textAlign "center" :fontWeight "bold"}} "press me"]]])))
 
-(.registerRunnable app-registry "$PROJECT_NAME$"
-                   (fn [params]
-                       (dispatch-sync [:initialize-db])
-                       (r/render [widget] (.-rootTag params))))
+(defn mount-root []
+      (r/render [widget] 1))
+
+(defn ^:export init []
+      (dispatch-sync [:initialize-db])
+      (.registerRunnable app-registry "$PROJECT_NAME$" #(mount-root)))
