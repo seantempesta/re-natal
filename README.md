@@ -19,12 +19,13 @@ Generated project works in iOS and Android devices.
 
 ## State
 - Same codebase for iOS and Android
-- Figwheel used for REPL and live coding
-- For Android figwheel does not work yet, but auto-compile and reload works fast
-- Figwheel is only working in "Debug in Chrome" mode
-- You can reload app any time, no problem.
+- Figwheel used for REPL and live coding.
+  - Only works in "Debug in Chrome" mode
+  - Works in iOS (tested using simulator).
+  - Works in Android (tested on real device, encountered connection problem using Android simulator genymotion)
+  - You can reload app any time, no problem.
 - Optimizations :simple is used to compile "production" index.ios.js and index.android.js
-- [Unified way of using static images of rn 0.14](https://facebook.github.io/react-native/docs/images.html) work ONLY with prod-build...
+- [Unified way of using static images of rn 0.14](https://facebook.github.io/react-native/docs/images.html) works
 
 ## Usage
 
@@ -78,15 +79,25 @@ Then execute commands:
 ```
 $ re-natal use-figwheel
 $ lein figwheel ios
-or
+```
+or for usage without figwheel:
+```
 $ re-natal use-reload
 $ lein cljsbuild auto android
 ```
-This will generate index.ios.js and index.android.js to make `optimizations :none` possible.
 
-You have to reload your app,
-and if you have used figwheel the REPL should come up with prompt.
+This will generate index.ios.js and index.android.js which works with compiler mode`optimizations :none`.
 
+To run figwheel with real Android device please read [Running on Device](https://facebook.github.io/react-native/docs/running-on-device-android.html#content).
+To make it work on USB connected device I had also to do the following:
+```
+$ adb reverse tcp:8081 tcp:8081
+$ adb reverse tcp:3449 tcp:3449
+```
+
+You have to reload your app, and should see the REPL coming up with the prompt.
+
+## REPL
 At the REPL prompt, try loading your app's namespace:
 
 ```clojure
@@ -108,7 +119,10 @@ Do this with command:
 $ lein prod-build
 ```
 It will clean and rebuild index.ios.js and index.android.js with `optimizations :simple`
-After this you can reload the app exit "Debug in Chrome".
+After this you can reload the app and exit "Debug in Chrome".
+
+Having index.ios.js and index.android.js build this way, you should be able to
+follow the RN docs to proceed with the release.
 
 ## Tips
 - Having `rlwrap` installed is optional but highly recommended since it makes
