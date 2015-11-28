@@ -22,7 +22,8 @@ Generated project works in iOS and Android devices.
 - For Android figwheel does not work yet, but auto-compile and reload works fast
 - Figwheel is only working in "Debug in Chrome" mode
 - You can reload app any time, no problem.
-- Compiler with optimizations :simple is
+- Optimizations :simple is used to compile "production" index.ios.js and index.android.js
+- [Unified way of using static images of rn 0.14](https://facebook.github.io/react-native/docs/images.html) work ONLY with prod-build...
 
 ## Usage
 
