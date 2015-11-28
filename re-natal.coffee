@@ -192,8 +192,8 @@ init = (projName) ->
 
     handlersPath = "src/#{projNameUs}/handlers.cljs"
     subsPath = "src/#{projNameUs}/subs.cljs"
-    exec "cp #{resources}handlers.cljs #{handlersPath}"
-    exec "cp #{resources}subs.cljs #{subsPath}"
+    exec "cp #{resources}cljs/handlers.cljs #{handlersPath}"
+    exec "cp #{resources}cljs/subs.cljs #{subsPath}"
 
     edit handlersPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
     edit subsPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
@@ -207,30 +207,42 @@ init = (projName) ->
     coreAndroidPath = "src/#{projNameUs}/android/core.cljs"
     coreIosPath = "src/#{projNameUs}/ios/core.cljs"
 
-    exec "cp #{resources}core.cljs #{coreAndroidPath}"
+    exec "cp #{resources}cljs/core.cljs #{coreAndroidPath}"
     edit coreAndroidPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"]]
 
-    exec "cp #{resources}core.cljs #{coreIosPath}"
+    exec "cp #{resources}cljs/core.cljs #{coreIosPath}"
     edit coreIosPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
 
-    fs.mkdirSync "src/env"
-    fs.mkdirSync "src/env/ios"
-    fs.mkdirSync "src/env/android"
+    fs.mkdirSync "env"
+    fs.mkdirSync "env/dev"
+    fs.mkdirSync "env/dev/env"
+    fs.mkdirSync "env/dev/env/ios"
+    fs.mkdirSync "env/dev/env/android"
+    fs.mkdirSync "env/prod"
+    fs.mkdirSync "env/prod/env"
+    fs.mkdirSync "env/prod/env/ios"
+    fs.mkdirSync "env/prod/env/android"
 
-    envIosDevPath = "src/env/ios/dev.cljs"
-    envIosProdPath = "src/env/ios/prod.cljs"
-    envAndroidDevPath = "src/env/android/dev.cljs"
-    envAndroidProdPath = "src/env/android/prod.cljs"
+    mainIosDevPath = "env/dev/env/ios/main.cljs"
+    mainIosProdPath = "env/prod/env/ios/main.cljs"
+    mainAndroidDevPath = "env/dev/env/android/main.cljs"
+    mainAndroidProdPath = "env/prod/env/android/main.cljs"
 
-    exec "cp #{resources}dev.cljs #{envIosDevPath}"
-    edit envIosDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
-    exec "cp #{resources}prod.cljs #{envIosProdPath}"
-    edit envIosProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
-    exec "cp #{resources}dev.cljs #{envAndroidDevPath}"
-    edit envAndroidDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"]]
-    exec "cp #{resources}prod.cljs #{envAndroidProdPath}"
-    edit envAndroidProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"]]
+    exec "cp #{resources}cljs/main_dev.cljs #{mainIosDevPath}"
+    edit mainIosDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
+    exec "cp #{resources}cljs/main_prod.cljs #{mainIosProdPath}"
+    edit mainIosProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
+    exec "cp #{resources}cljs/main_dev.cljs #{mainAndroidDevPath}"
+    edit mainAndroidDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"]]
+    exec "cp #{resources}cljs/main_prod.cljs #{mainAndroidProdPath}"
+    edit mainAndroidProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"]]
 
+    requestImgMacroDevPath = "env/dev/env/require_img.clj"
+    requestImgMacroProdPath = "env/prod/env/require_img.clj"
+    exec "cp #{resources}require_img_dev.clj #{requestImgMacroDevPath}"
+    exec "cp #{resources}require_img_prod.clj #{requestImgMacroProdPath}"
+
+    exec "cp -r #{resources}images ."
 
     log 'Creating React Native skeleton. Relax, this takes a while...'
 
@@ -360,12 +372,9 @@ getDeviceUuids = ->
 generateDevScripts = (method) ->
   try
     fs.statSync '.re-natal'
-    fs.unlinkSync 'index.android.js'
-    fs.unlinkSync 'index.ios.js'
-
-    fs.writeFileSync 'index.ios.js', "require('react-native');require('figwheel-bridge')."+method+"('ios');", null, 2
+    fs.writeFileSync 'index.ios.js', "require('react-native');require('figwheel-bridge')."+method+"('ios');"
     log 'index.ios.js was regenerated'
-    fs.writeFileSync 'index.android.js', "require('react-native');require('figwheel-bridge')."+method+"('android');", null, 2
+    fs.writeFileSync 'index.android.js', "require('react-native');require('figwheel-bridge')."+method+"('android');"
     log 'index.android.js was regenerated'
   catch {message}
     logErr \

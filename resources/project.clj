@@ -14,31 +14,31 @@
                                    ["do" "clean"
                                     ["with-profile" "prod" "cljsbuild" "once" "ios"]
                                     ["with-profile" "prod" "cljsbuild" "once" "android"]]}
-            :profiles {:dev {:cljsbuild    {:builds {:ios     {:source-paths ["src"]
+            :profiles {:dev {:cljsbuild    {:builds {:ios     {:source-paths ["src" "env/dev"]
                                                                :figwheel     {:on-jsload        $PROJECT_NAME_HYPHENATED$.ios.core/mount-root
                                                                               :heads-up-display false
                                                                               :debug            false}
                                                                :compiler     {:output-to     "target/ios/not-used.js"
-                                                                              :main          "env.ios.dev"
+                                                                              :main          "env.ios.main"
                                                                               :output-dir    "target/ios"
                                                                               :optimizations :none}}
-                                                     :android {:source-paths ["src"]
+                                                     :android {:source-paths ["src" "env/dev"]
                                                                :figwheel     {:on-jsload        $PROJECT_NAME_HYPHENATED$.android.core/mount-root
                                                                               :heads-up-display false
                                                                               :debug            true}
                                                                :compiler     {:output-to     "target/android/not-used.js"
-                                                                              :main          "env.android.dev"
+                                                                              :main          "env.android.main"
                                                                               :output-dir    "target/android"
                                                                               :optimizations :none}}}}
                              }
-                       :prod {:cljsbuild {:builds {:ios     {:source-paths ["src"]
+                       :prod {:cljsbuild {:builds {:ios     {:source-paths ["src" "env/prod"]
                                                              :compiler     {:output-to     "index.ios.js"
-                                                                            :main          "env.ios.prod"
+                                                                            :main          "env.ios.main"
                                                                             :output-dir    "target/ios"
                                                                             :optimizations :simple}}
-                                                   :android {:source-paths ["src"]
+                                                   :android {:source-paths ["src" "env/prod"]
                                                              :compiler     {:output-to     "index.android.js"
-                                                                            :main          "env.android.prod"
+                                                                            :main          "env.android.main"
                                                                             :output-dir    "target/android"
                                                                             :optimizations :simple}}}}
                               }})

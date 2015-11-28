@@ -1,4 +1,5 @@
 (ns ^:figwheel-always $PROJECT_NAME_HYPHENATED$.$PLATFORM$.core
+  (:require-macros [env.require-img :refer [require-img]])
   (:require [reagent.core :as r :refer [atom]]
             [re-frame.core :refer [subscribe dispatch dispatch-sync]]
             [$PROJECT_NAME_HYPHENATED$.handlers]
@@ -12,12 +13,14 @@
 (def image (r/adapt-react-class (.-Image js/React)))
 (def touchable-highlight (r/adapt-react-class (.-TouchableHighlight js/React)))
 
+(def logo-img (require-img "./images/cljs.png"))
+
 (defn widget []
   (let [greeting (subscribe [:get-greeting])]
     (fn []
       [view {:style {:flexDirection "column" :margin 40 :alignItems "center"}}
        [text {:style {:fontSize 30 :fontWeight "100" :marginBottom 20 :textAlign "center"}} @greeting]
-       [image {:source {:uri "https://raw.githubusercontent.com/cljsinfo/logo.cljs/master/cljs.png"}
+       [image {:source logo-img
                :style  {:width 80 :height 80 :marginBottom 30}}]
        [touchable-highlight {:style {:backgroundColor "#999" :padding 10 :borderRadius 5}}
         [text {:style {:color "white" :textAlign "center" :fontWeight "bold"}} "press me"]]])))
