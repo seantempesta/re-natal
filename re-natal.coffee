@@ -187,6 +187,8 @@ init = (projName) ->
         [projNameHyphRx, projNameHyph]
       ]
 
+    exec "rm -rf resources"
+
     corePath = "src/#{projNameUs}/core.clj"
     fs.unlinkSync corePath
 
