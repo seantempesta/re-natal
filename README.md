@@ -70,7 +70,7 @@ are compiled with `optimizations :simple`.
 Development in such mode is not fun because of slow compilation and long reload time.
 
 Luckily, this can be improved by compiling with `optimizations :none` and using
-figwheel (unfortunately not working in Android yet)
+figwheel.
 
 To start development in `optimizations :none` mode you have to start "Debug in Chrome"
 in your React Native application.
