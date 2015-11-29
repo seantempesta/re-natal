@@ -1,4 +1,4 @@
-(ns ^:figwheel-always $PROJECT_NAME_HYPHENATED$.$PLATFORM$.core
+(ns ^:figwheel-load $PROJECT_NAME_HYPHENATED$.$PLATFORM$.core
   (:require-macros [env.require-img :refer [require-img]])
   (:require [reagent.core :as r :refer [atom]]
             [re-frame.core :refer [subscribe dispatch dispatch-sync]]
