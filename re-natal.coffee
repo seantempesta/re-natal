@@ -157,6 +157,30 @@ getBundleId = (name) ->
     logErr message
 
 
+copyEnvironmentFiles = (projNameHyph, projName) ->
+  mainIosDevPath = "env/dev/env/ios/main.cljs"
+  mainIosProdPath = "env/prod/env/ios/main.cljs"
+  mainAndroidDevPath = "env/dev/env/android/main.cljs"
+  mainAndroidProdPath = "env/prod/env/android/main.cljs"
+
+  exec "cp #{resources}cljs/main_dev.cljs #{mainIosDevPath}"
+  edit mainIosDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
+  exec "cp #{resources}cljs/main_prod.cljs #{mainIosProdPath}"
+  edit mainIosProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
+  exec "cp #{resources}cljs/main_dev.cljs #{mainAndroidDevPath}"
+  edit mainAndroidDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"]]
+  exec "cp #{resources}cljs/main_prod.cljs #{mainAndroidProdPath}"
+  edit mainAndroidProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"]]
+
+  requestImgMacroDevPath = "env/dev/env/require_img.clj"
+  requestImgMacroProdPath = "env/prod/env/require_img.clj"
+  exec "cp #{resources}require_img_dev.clj #{requestImgMacroDevPath}"
+  exec "cp #{resources}require_img_prod.clj #{requestImgMacroProdPath}"
+
+copyFigwheelBridge = (projNameUs) ->
+  exec "cp #{resources}figwheel-bridge.js ."
+  edit "figwheel-bridge.js", [[projNameUsRx, projNameUs]]
+
 init = (projName) ->
   if projName.toLowerCase() is 'react' or !projName.match validNameRx
     logErr 'Invalid project name. Use an alphanumeric CamelCase name.'
@@ -225,24 +249,7 @@ init = (projName) ->
     fs.mkdirSync "env/prod/env/ios"
     fs.mkdirSync "env/prod/env/android"
 
-    mainIosDevPath = "env/dev/env/ios/main.cljs"
-    mainIosProdPath = "env/prod/env/ios/main.cljs"
-    mainAndroidDevPath = "env/dev/env/android/main.cljs"
-    mainAndroidProdPath = "env/prod/env/android/main.cljs"
-
-    exec "cp #{resources}cljs/main_dev.cljs #{mainIosDevPath}"
-    edit mainIosDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
-    exec "cp #{resources}cljs/main_prod.cljs #{mainIosProdPath}"
-    edit mainIosProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
-    exec "cp #{resources}cljs/main_dev.cljs #{mainAndroidDevPath}"
-    edit mainAndroidDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"]]
-    exec "cp #{resources}cljs/main_prod.cljs #{mainAndroidProdPath}"
-    edit mainAndroidProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"]]
-
-    requestImgMacroDevPath = "env/dev/env/require_img.clj"
-    requestImgMacroProdPath = "env/prod/env/require_img.clj"
-    exec "cp #{resources}require_img_dev.clj #{requestImgMacroDevPath}"
-    exec "cp #{resources}require_img_prod.clj #{requestImgMacroProdPath}"
+    copyEnvironmentFiles(projNameHyph, projName)
 
     exec "cp -r #{resources}images ."
 
@@ -268,8 +275,7 @@ init = (projName) ->
 
     generateConfig projName
 
-    exec "cp #{resources}figwheel-bridge.js ."
-    edit "figwheel-bridge.js", [[projNameUsRx, projNameUs]]
+    copyFigwheelBridge(projNameUs)
 
     log 'Compiling ClojureScript'
     exec 'lein prod-build'
@@ -408,6 +414,16 @@ startRepl = (name, autoChoose) ->
   catch {message}
     logErr message
 
+doUpgrade = (config) ->
+  projName = config.name;
+  projNameHyph = projName.replace(camelRx, '$1-$2').toLowerCase()
+  projNameUs   = toUnderscored projName
+
+  copyEnvironmentFiles(projNameHyph, projName)
+  log 'upgraded files in env/'
+
+  copyFigwheelBridge(projNameUs)
+  log 'upgraded figwheel-bridge.js'
 
 cli._name = 're-natal'
 cli.version pkgJson.version
@@ -429,6 +445,11 @@ cli.command 'launch'
   .description 'compile project and run in iOS simulator'
   .action ->
     ensureFreePort -> launch readConfig()
+
+cli.command 'upgrade'
+.description 'upgrades project files to current installed version of re-natal (the upgrade of re-natal itself is done via npm)'
+.action ->
+  doUpgrade readConfig()
 
 cli.command 'listdevices'
   .description 'list available simulator devices by index'
