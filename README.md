@@ -56,7 +56,7 @@ $ cd future-app
 ```
 To run in iOS:
 ```
-$ cd re-natal xcode
+$ re-natal xcode
 ```
 and then run your app from Xcode normally.
 
