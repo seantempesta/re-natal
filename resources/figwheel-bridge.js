@@ -6,124 +6,198 @@
 
 var CLOSURE_UNCOMPILED_DEFINES = null;
 
+var React = require('react-native');
+
 var config = {
-    basePath: '',
-    googBasePath: 'goog/'
+    server: 'http://localhost:8081',
+    basePath: "target/",
+    googBasePath: 'goog/',
+    splash: React.createClass({
+        render: function () {
+            var plainStyle = {flex: 1, alignItems: 'center', justifyContent: 'center'};
+            return (
+                <React.View style={plainStyle}>
+                    <React.Text>Waiting for Figwheel to load files.</React.Text>
+                </React.View>
+            );
+        }
+    })
 };
 
-// Uninstall watchman???
-function importJs(src, success, error){
-    if(typeof success !== 'function') { success = function(){}; }
-    if(typeof error !== 'function') { error = function(){}; }
+var scriptQueue = [];
+var fileBasePath = null; // will be set dynamically
+var evaluate = eval; // This is needed, direct calls to eval does not work (RN packager???)
 
-    console.log('(Figwheel Bridge) Importing: ' + config.basePath + src);
-    try {
-        importScripts(config.basePath + src);
-        success();
-    } catch(e) {
-        console.warn('Could not load: ' + config.basePath + src);
-        console.error('Import error: ' + e);
-        error();
+// evaluates js code ensuring proper ordering
+function customEval(url, javascript, success, error) {
+    if (scriptQueue.length > 0) {
+        if (scriptQueue[0] === url) {
+            try {
+                evaluate(javascript);
+                console.info('Evaluated: ' + url);
+                scriptQueue.shift();
+                if (url.indexOf('jsloader') > -1) {
+                    shimJsLoader();
+                }
+                success();
+            } catch (e) {
+                console.error('Evaluation error in: ' + url);
+                console.error(e);
+                error();
+            }
+        } else {
+            setTimeout(function () {
+                customEval(url, javascript, success, error)
+            }, 5);
+        }
+    } else {
+        console.error('Something bad happened...');
+        error()
     }
 }
+function asyncImportScripts(path, success, error) {
+    var url = config.server + '/' + path;
 
-// Loads base goog js file then cljs_deps, goog.deps, core project cljs, and then figwheel
-// Also calls the function to shim goog.require and goog.net.jsLoader.load
+    console.info('(asyncImportScripts) Importing: ' + url);
+    scriptQueue.push(url);
+    fetch(url)
+        .then(function (response) {
+            return response.text()
+        })
+        .then(function (responseText) {
+            return customEval(url, responseText, success, error);
+        })
+        .catch(function (error) {
+            console.error('Error loading script, please check your config setup.');
+            console.error(error);
+            return error();
+        });
+}
+
+// Async load of javascript files
+function importJs(src, success, error) {
+    if (typeof success !== 'function') {
+        success = function () {
+        };
+    }
+    if (typeof error !== 'function') {
+        error = function () {
+        };
+    }
+
+    var filePath = fileBasePath + '/' + src;
+
+    console.info('(importJs) Importing: ' + filePath);
+    asyncImportScripts(filePath, success, error);
+}
+
+
 function loadApp(platform) {
-    config.basePath = "/target/" + platform + "/";
+    fileBasePath = config.basePath + platform;
 
-    if(typeof goog === "undefined") {
+    if (typeof goog === "undefined") {
         console.log('Loading Closure base.');
-        importJs('goog/base.js');
-        shimBaseGoog();
-        fakeLocalStorageAndDocument();
-        importJs('cljs_deps.js');
-        importJs('goog/deps.js');
-        importJs('$PROJECT_NAME_UNDERSCORED$/'+platform+'/core.js');
+        importJs('goog/base.js', function () {
+            shimBaseGoog();
+            fakeLocalStorageAndDocument();
+            importJs('cljs_deps.js');
+            importJs('goog/deps.js', function () {
 
-        console.log('Done loading Clojure app');
+                // This is needed because of RN packager
+                // seriously React packager? why.
+                var googreq = goog.require;
+
+                googreq('figwheel.connect');
+                googreq('env.' + platform + '.main');
+
+                console.log('Done loading Clojure app');
+            });
+        });
     }
 }
 
-function startApp(platform) {
-    if(typeof goog === "undefined") {
+function startApp(appName, platform) {
+    React.AppRegistry.registerComponent(appName, () => config.splash);
+    if (typeof goog === "undefined") {
         loadApp(platform);
     }
-    console.log('Starting the app');
-    eval("$PROJECT_NAME_UNDERSCORED$."+platform+".core.init()");
 }
 
-// Loads base goog js file then cljs_deps, goog.deps, core project cljs, and then figwheel
-// Also calls the function to shim goog.require and goog.net.jsLoader.load
-function startWithFigwheel(platform) {
-    if(typeof goog === "undefined") {
-        startApp(platform);
-    }
-    importJs('figwheel/connect.js');
-
-    // goog.require('figwheel.connect');
-    // goog.require('rn_test.core');
-    shimJsLoader();
-
-}
-
-function shimBaseGoog(){
+// Goog fixes
+function shimBaseGoog() {
+    console.info('Shimming goog functions.');
     goog.basePath = 'goog/';
     goog.writeScriptSrcNode = importJs;
-    goog.writeScriptTag_ = function(src, opt_sourceText){
+    goog.writeScriptTag_ = function (src, optSourceText) {
         importJs(src);
         return true;
-    }
-    goog.inHtmlDocument_ = function(){ return true; };
+    };
+    goog.inHtmlDocument_ = function () {
+        return true;
+    };
 }
 
 function fakeLocalStorageAndDocument() {
     window.localStorage = {};
-    window.localStorage.getItem = function(){ return 'true'; };
-    window.localStorage.setItem = function(){};
+    window.localStorage.getItem = function () {
+        return 'true';
+    };
+    window.localStorage.setItem = function () {
+    };
 
     window.document = {};
     window.document.body = {};
-    window.document.body.dispatchEvent = function(){};
-    window.document.createElement = function(){};
+    window.document.body.dispatchEvent = function () {
+    };
+    window.document.createElement = function () {
+    };
+
+    if (typeof window.location === 'undefined') {
+        window.location = {};
+    }
+    console.debug = console.warn;
+    window.addEventListener = function () {
+    };
 }
 
-
+// Figwheel fixes
 // Used by figwheel - uses importScript to load JS rather than <script>'s
-function shimJsLoader(){
-    goog.net.jsloader.load = function(uri, options) {
+function shimJsLoader() {
+    console.info('==== Shimming jsloader ====');
+    goog.net.jsloader.load = function (uri, options) {
         var deferred = {
             callbacks: [],
             errbacks: [],
-            addCallback: function(cb){
+            addCallback: function (cb) {
                 deferred.callbacks.push(cb);
             },
-            addErrback: function(cb){
+            addErrback: function (cb) {
                 deferred.errbacks.push(cb);
             },
-            callAllCallbacks: function(){
-                while(deferred.callbacks.length > 0){
+            callAllCallbacks: function () {
+                while (deferred.callbacks.length > 0) {
                     deferred.callbacks.shift()();
                 }
             },
-            callAllErrbacks: function(){
-                while(deferred.errbacks.length > 0){
+            callAllErrbacks: function () {
+                while (deferred.errbacks.length > 0) {
                     deferred.errbacks.shift()();
                 }
             }
         };
 
-        // Figwheel needs this to be an async call, so that it can add callbacks to deferred
-        setTimeout(function(){
-            importJs(uri.getPath(), deferred.callAllCallbacks, deferred.callAllErrbacks);
+        // Figwheel needs this to be an async call,
+        //    so that it can add callbacks to deferred
+        setTimeout(function () {
+            importJs(uri.getPath(),
+                deferred.callAllCallbacks,
+                deferred.callAllErrbacks);
         }, 1);
 
         return deferred;
-    }
+    };
 }
 
 module.exports = {
-    start: startApp,
-    figwheel : startWithFigwheel,
-    load: loadApp
+    start: startApp
 };

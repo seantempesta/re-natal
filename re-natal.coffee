@@ -377,12 +377,12 @@ getDeviceUuids = ->
   getDeviceList().map (line) -> line.match(/\[(.+)\]/)[1]
 
 
-generateDevScripts = (method) ->
+generateDevScripts = () ->
   try
-    fs.statSync '.re-natal'
-    fs.writeFileSync 'index.ios.js', "require('react-native');require('figwheel-bridge')."+method+"('ios');"
+    appName = readConfig().name
+    fs.writeFileSync 'index.ios.js', "require('figwheel-bridge').start('" + appName + "','ios');"
     log 'index.ios.js was regenerated'
-    fs.writeFileSync 'index.android.js', "require('react-native');require('figwheel-bridge')."+method+"('android');"
+    fs.writeFileSync 'index.android.js', "require('figwheel-bridge').start('" + appName + "','android');"
     log 'index.android.js was regenerated'
   catch {message}
     logErr \
@@ -485,12 +485,7 @@ cli.command 'deps'
 cli.command 'use-figwheel'
   .description 'generate index.ios.js and index.android.js for development with figwheel'
   .action ->
-    generateDevScripts("figwheel")
-
-cli.command 'use-reload'
-  .description 'generate index.ios.js and index.android.js for development using app reload'
-  .action ->
-    generateDevScripts("start")
+    generateDevScripts()
 
 cli.on '*', (command) ->
   logErr "unknown command #{command[0]}. See re-natal --help for valid commands"

@@ -4,5 +4,6 @@
  (enable-console-print!)
 
  (core/init)
+ (core/mount-root)
 
 

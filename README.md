@@ -20,10 +20,10 @@ Generated project works in iOS and Android devices.
 ## State
 - Same codebase for iOS and Android
 - Figwheel used for REPL and live coding.
-  - Only works in "Debug in Chrome" mode
   - Works in iOS (tested using simulator).
-  - Works in Android (tested on real device, encountered connection problem using Android simulator genymotion)
+  - Works in Android (tested on real device, does not work on simulator yet)
   - You can reload app any time, no problem.
+  - "Debug in Chrome" is not required anymore.
 - Optimizations :simple is used to compile "production" index.ios.js and index.android.js
 - [Unified way of using static images of rn 0.14](https://facebook.github.io/react-native/docs/images.html) works
 
@@ -62,6 +62,7 @@ and then run your app from Xcode normally.
 
 To run in Android, run your simulator first or connect device and:
 ```
+$ adb reverse tcp:8081 tcp:8081
 $ react-native run-android
 ```
 
@@ -70,20 +71,12 @@ are compiled with `optimizations :simple`.
 Development in such mode is not fun because of slow compilation and long reload time.
 
 Luckily, this can be improved by compiling with `optimizations :none` and using
-figwheel.
+Figwheel.
 
-To start development in `optimizations :none` mode you have to start "Debug in Chrome"
-in your React Native application.
-
-Then execute commands:
+To start development mode execute commands:
 ```
 $ re-natal use-figwheel
 $ lein figwheel ios
-```
-or for usage without figwheel:
-```
-$ re-natal use-reload
-$ lein cljsbuild auto android
 ```
 
 This will generate index.ios.js and index.android.js which works with compiler mode`optimizations :none`.
@@ -119,10 +112,16 @@ Do this with command:
 $ lein prod-build
 ```
 It will clean and rebuild index.ios.js and index.android.js with `optimizations :simple`
-After this you can reload the app and exit "Debug in Chrome".
 
 Having index.ios.js and index.android.js build this way, you should be able to
 follow the RN docs to proceed with the release.
+
+## Problems with Android simulator
+Using Figwheel with android simulator is not working out of the box yet.
+Looks like the main reason for that is that requests to http://localhost:8081 fails because
+"localhost" is simulators own loopback interface and not the one of the host machine.
+According to [Emulator docs](http://developer.android.com/tools/devices/emulator.html#networkaddresses)
+instead of "localhost" a special IP: 10.0.2.2 should be used.
 
 ## Tips
 - Having `rlwrap` installed is optional but highly recommended since it makes
