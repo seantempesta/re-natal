@@ -99,7 +99,7 @@ $ lein figwheel android
 ```
 And deploy your app:
 ```
-$ reaact-native run-android
+$ react-native run-android
 ```
 #### Using Figwheel in Genymotion simulator
 With genymotion Android simulator you have to use IP "10.0.3.2" in urls to refer to your local machine.
@@ -110,7 +110,7 @@ $ lein figwheel android
 ```
 Start your simulator and deploy your app:
 ```
-$ reaact-native run-android
+$ react-native run-android
 ```
 
 #### Using Figwheel in stock Android emulator (AVD)
@@ -122,7 +122,7 @@ $ lein figwheel android
 ```
 Start your simulator and deploy your app:
 ```
-$ reaact-native run-android
+$ react-native run-android
 ```
 
 ## REPL
