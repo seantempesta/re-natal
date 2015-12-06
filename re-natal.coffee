@@ -287,7 +287,7 @@ init = (projName) ->
     log 'Open iOS app in xcode and run it:' , 'yellow'
     log 're-natal xcode', 'inverse'
     log ''
-    log 'To use figwheel start "Debug in Chrome" in simulator and type:' , 'yellow'
+    log 'To use figwheel type:' , 'yellow'
     log 're-natal use-figwheel', 'inverse'
     log 'lein figwheel ios', 'inverse'
     log ''
