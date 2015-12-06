@@ -9,7 +9,6 @@ var CLOSURE_UNCOMPILED_DEFINES = null;
 var React = require('react-native');
 
 var config = {
-    server: 'http://localhost:8081',
     basePath: "target/",
     googBasePath: 'goog/',
     splash: React.createClass({
@@ -25,6 +24,7 @@ var config = {
 };
 
 var scriptQueue = [];
+var server = null; // will be set dynamically
 var fileBasePath = null; // will be set dynamically
 var evaluate = eval; // This is needed, direct calls to eval does not work (RN packager???)
 
@@ -56,7 +56,7 @@ function customEval(url, javascript, success, error) {
     }
 }
 function asyncImportScripts(path, success, error) {
-    var url = config.server + '/' + path;
+    var url = server + '/' + path;
 
     console.info('(asyncImportScripts) Importing: ' + url);
     scriptQueue.push(url);
@@ -92,7 +92,8 @@ function importJs(src, success, error) {
 }
 
 
-function loadApp(platform) {
+function loadApp(platform, devHost) {
+    server = "http://"+ devHost + ":8081";
     fileBasePath = config.basePath + platform;
 
     if (typeof goog === "undefined") {
@@ -116,10 +117,10 @@ function loadApp(platform) {
     }
 }
 
-function startApp(appName, platform) {
+function startApp(appName, platform, devHost) {
     React.AppRegistry.registerComponent(appName, () => config.splash);
     if (typeof goog === "undefined") {
-        loadApp(platform);
+        loadApp(platform, devHost);
     }
 }
 

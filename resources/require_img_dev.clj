@@ -3,4 +3,4 @@
 (defmacro require-img
   "Load image from local packager service"
   [src]
-          {:uri (str "http://localhost:8081/" src)})
+          {:uri (str "http://$DEV_HOST$:8081/" src)})

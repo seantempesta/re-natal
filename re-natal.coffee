@@ -22,6 +22,7 @@ projNameRx      = /\$PROJECT_NAME\$/g
 projNameHyphRx  = /\$PROJECT_NAME_HYPHENATED\$/g
 projNameUsRx    = /\$PROJECT_NAME_UNDERSCORED\$/g
 platformRx      = /\$PLATFORM\$/g
+devHostRx       = /\$DEV_HOST\$/g
 rnVersion       = '0.15.0'
 rnPackagerPort  = 8081
 podMinVersion   = '0.38.2'
@@ -157,24 +158,29 @@ getBundleId = (name) ->
     logErr message
 
 
-copyEnvironmentFiles = (projNameHyph, projName) ->
+copyDevEnvironmentFiles = (projNameHyph, projName, devHost) ->
   mainIosDevPath = "env/dev/env/ios/main.cljs"
-  mainIosProdPath = "env/prod/env/ios/main.cljs"
   mainAndroidDevPath = "env/dev/env/android/main.cljs"
-  mainAndroidProdPath = "env/prod/env/android/main.cljs"
 
   exec "cp #{resources}cljs/main_dev.cljs #{mainIosDevPath}"
-  edit mainIosDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
+  edit mainIosDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"], [devHostRx, devHost] ]
+  exec "cp #{resources}cljs/main_dev.cljs #{mainAndroidDevPath}"
+  edit mainAndroidDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"], [devHostRx, devHost]]
+
+  requestImgMacroDevPath = "env/dev/env/require_img.clj"
+  exec "cp #{resources}require_img_dev.clj #{requestImgMacroDevPath}"
+  edit requestImgMacroDevPath, [[devHostRx, devHost]]
+
+copyProdEnvironmentFiles = (projNameHyph, projName) ->
+  mainIosProdPath = "env/prod/env/ios/main.cljs"
+  mainAndroidProdPath = "env/prod/env/android/main.cljs"
+
   exec "cp #{resources}cljs/main_prod.cljs #{mainIosProdPath}"
   edit mainIosProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
-  exec "cp #{resources}cljs/main_dev.cljs #{mainAndroidDevPath}"
-  edit mainAndroidDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"]]
   exec "cp #{resources}cljs/main_prod.cljs #{mainAndroidProdPath}"
   edit mainAndroidProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"]]
 
-  requestImgMacroDevPath = "env/dev/env/require_img.clj"
   requestImgMacroProdPath = "env/prod/env/require_img.clj"
-  exec "cp #{resources}require_img_dev.clj #{requestImgMacroDevPath}"
   exec "cp #{resources}require_img_prod.clj #{requestImgMacroProdPath}"
 
 copyFigwheelBridge = (projNameUs) ->
@@ -249,7 +255,8 @@ init = (projName) ->
     fs.mkdirSync "env/prod/env/ios"
     fs.mkdirSync "env/prod/env/android"
 
-    copyEnvironmentFiles(projNameHyph, projName)
+    copyDevEnvironmentFiles(projNameHyph, projName, "localhost")
+    copyProdEnvironmentFiles(projNameHyph, projName)
 
     exec "cp -r #{resources}images ."
 
@@ -377,13 +384,18 @@ getDeviceUuids = ->
   getDeviceList().map (line) -> line.match(/\[(.+)\]/)[1]
 
 
-generateDevScripts = () ->
+generateDevScripts = (devHost) ->
   try
-    appName = readConfig().name
-    fs.writeFileSync 'index.ios.js', "require('figwheel-bridge').start('" + appName + "','ios');"
+    projName = readConfig().name
+    projNameHyph = projName.replace(camelRx, '$1-$2').toLowerCase()
+
+    fs.writeFileSync 'index.ios.js', "require('figwheel-bridge').start('" + projName + "','ios', '" + devHost + "');"
     log 'index.ios.js was regenerated'
-    fs.writeFileSync 'index.android.js', "require('figwheel-bridge').start('" + appName + "','android');"
+    fs.writeFileSync 'index.android.js', "require('figwheel-bridge').start('" + projName + "','android', '" + devHost + "');"
     log 'index.android.js was regenerated'
+
+    copyDevEnvironmentFiles(projNameHyph, projName, devHost)
+    log 'Dev server host: ' + devHost
   catch {message}
     logErr \
       if message.match /EACCES/i
@@ -391,35 +403,13 @@ generateDevScripts = () ->
       else
         message
 
-startRepl = (name, autoChoose) ->
-  log 'Starting REPL'
-  hasRlwrap =
-    try
-      exec 'type rlwrap'
-      true
-    catch
-      log '
-          Warning: rlwrap is not installed.\nInstall it to make the REPL a much
-          better experience with arrow key support.
-          ', 'red'
-      false
-
-  try
-    child.spawn (if hasRlwrap then 'rlwrap' else 'lein'),
-      "#{if hasRlwrap then 'lein ' else ''}figwheel ios",
-      cwd:   process.cwd()
-      env:   process.env
-      stdio: 'inherit'
-
-  catch {message}
-    logErr message
-
 doUpgrade = (config) ->
   projName = config.name;
   projNameHyph = projName.replace(camelRx, '$1-$2').toLowerCase()
   projNameUs   = toUnderscored projName
 
-  copyEnvironmentFiles(projNameHyph, projName)
+  copyDevEnvironmentFiles(projNameHyph, projName, "localhost")
+  copyProdEnvironmentFiles(projNameHyph, projName)
   log 'upgraded files in env/'
 
   copyFigwheelBridge(projNameUs)
@@ -484,8 +474,9 @@ cli.command 'deps'
 
 cli.command 'use-figwheel'
   .description 'generate index.ios.js and index.android.js for development with figwheel'
-  .action ->
-    generateDevScripts()
+  .option "-H, --host [host or IP address}]", 'specify server host (default localhost)', "localhost"
+  .action (cmd) ->
+    generateDevScripts(cmd.host)
 
 cli.on '*', (command) ->
   logErr "unknown command #{command[0]}. See re-natal --help for valid commands"

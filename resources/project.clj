@@ -15,17 +15,13 @@
                                     ["with-profile" "prod" "cljsbuild" "once" "ios"]
                                     ["with-profile" "prod" "cljsbuild" "once" "android"]]}
             :profiles {:dev {:cljsbuild    {:builds {:ios     {:source-paths ["src" "env/dev"]
-                                                               :figwheel     {:on-jsload        $PROJECT_NAME_HYPHENATED$.ios.core/mount-root
-                                                                              :heads-up-display false
-                                                                              :debug            false}
+                                                               :figwheel     true
                                                                :compiler     {:output-to     "target/ios/not-used.js"
                                                                               :main          "env.ios.main"
                                                                               :output-dir    "target/ios"
                                                                               :optimizations :none}}
                                                      :android {:source-paths ["src" "env/dev"]
-                                                               :figwheel     {:on-jsload        $PROJECT_NAME_HYPHENATED$.android.core/mount-root
-                                                                              :heads-up-display false
-                                                                              :debug            true}
+                                                               :figwheel     true
                                                                :compiler     {:output-to     "target/android/not-used.js"
                                                                               :main          "env.android.main"
                                                                               :output-dir    "target/android"
