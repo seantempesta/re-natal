@@ -21,7 +21,9 @@ Generated project works in iOS and Android devices.
 - Same codebase for iOS and Android
 - Figwheel used for REPL and live coding.
   - Works in iOS (tested using simulator).
-  - Works in Android (tested on real device, does NOT work in Android simulator yet)
+  - Works in Android device
+  - Works in Android simulator Genymotion (with re-natal use-figwheel -H 10.0.3.2)
+  - Works in stock Android emulator (with re-natal use-figwheel -H 10.0.2.2)
   - You can reload app any time, no problem.
   - "Debug in Chrome" is not required anymore.
 - Optimizations :simple is used to compile "production" index.ios.js and index.android.js
@@ -73,24 +75,59 @@ Development in such mode is not fun because of slow compilation and long reload 
 Luckily, this can be improved by compiling with `optimizations :none` and using
 Figwheel.
 
-To start development mode execute commands:
+#### Using Figwheel in iOS simulator
+Start your app from Xcode as described above.
+
+Then, to start development mode execute commands:
 ```
 $ re-natal use-figwheel
 $ lein figwheel ios
 ```
-
 This will generate index.ios.js and index.android.js which works with compiler mode`optimizations :none`.
 
+#### Using Figwheel in real Android device
 To run figwheel with real Android device please read [Running on Device](https://facebook.github.io/react-native/docs/running-on-device-android.html#content).
 To make it work on USB connected device I had also to do the following:
 ```
 $ adb reverse tcp:8081 tcp:8081
 $ adb reverse tcp:3449 tcp:3449
 ```
+Then:
+```
+$ re-natal use-figwheel
+$ lein figwheel android
+```
+And deploy your app:
+```
+$ reaact-native run-android
+```
+#### Using Figwheel in Genymotion simulator
+With genymotion Android simulator you have to use IP "10.0.3.2" in urls to refer to your local machine.
+To specify this use:
+```
+$ re-natal use-figwheel -H 10.0.3.2
+$ lein figwheel android
+```
+Start your simulator and deploy your app:
+```
+$ reaact-native run-android
+```
 
-You have to reload your app, and should see the REPL coming up with the prompt.
+#### Using Figwheel in stock Android emulator (AVD)
+With stock Android emulator you have to use IP "10.0.2.2" in urls to refer to your local machine.
+To specify this use:
+```
+$ re-natal use-figwheel -H 10.0.2.2
+$ lein figwheel android
+```
+Start your simulator and deploy your app:
+```
+$ reaact-native run-android
+```
 
 ## REPL
+You have to reload your app, and should see the REPL coming up with the prompt.
+
 At the REPL prompt, try loading your app's namespace:
 
 ```clojure
