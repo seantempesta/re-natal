@@ -21,7 +21,7 @@ Generated project works in iOS and Android devices.
 - Same codebase for iOS and Android
 - Figwheel used for REPL and live coding.
   - Works in iOS (tested using simulator).
-  - Works in Android device
+  - Works in real Android device
   - Works in Android simulator Genymotion (with re-natal use-figwheel -H 10.0.3.2)
   - Works in stock Android emulator (with re-natal use-figwheel -H 10.0.2.2)
   - You can reload app any time, no problem.
@@ -32,7 +32,7 @@ Generated project works in iOS and Android devices.
 ## Usage
 
 Before getting started, make sure you have the
-[required dependencies](#dependencies) installed.
+[required dependencies](#dependencies) installed.fix in
 
 Then, install the CLI using npm:
 
