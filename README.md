@@ -9,8 +9,8 @@ This project is a fork of [dmotz/natal](https://github.com/dmotz/natal) by Dan M
 the goal of generating skeleton of native app for iOS and Android based on
 [Reagent](https://github.com/reagent-project/reagent) and [re-frame](https://github.com/Day8/re-frame).
 
-The support of figwheel is based on solution developed by [decker405/figwheel-react-native](https://github.com/decker405/figwheel-react-native)
-There are lots of limitations currently, but IMHO this is the right way to go in order to support both platforms.
+The support of Figwheel is based on solution developed by Will Decker [decker405/figwheel-react-native](https://github.com/decker405/figwheel-react-native)
+There are limitations currently, but IMHO this is the right way to go in order to support both platforms.
 
 Re-Natal is a simple command-line utility that automates most of the process of
 setting up a React Native app running on ClojureScript with Reagent an re-frame.
