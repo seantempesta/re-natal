@@ -60,7 +60,7 @@ $ re-natal xcode
 ```
 and then run your app from Xcode normally.
 
-To run in Android, run your simulator first or connect device and:
+To run in Android, connect your device and:
 ```
 $ adb reverse tcp:8081 tcp:8081
 $ react-native run-android
