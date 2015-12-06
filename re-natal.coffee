@@ -389,6 +389,9 @@ generateDevScripts = (devHost) ->
     projName = readConfig().name
     projNameHyph = projName.replace(camelRx, '$1-$2').toLowerCase()
 
+    log 'Cleaning...'
+    exec 'lein clean'
+
     fs.writeFileSync 'index.ios.js', "require('figwheel-bridge').start('" + projName + "','ios', '" + devHost + "');"
     log 'index.ios.js was regenerated'
     fs.writeFileSync 'index.android.js', "require('figwheel-bridge').start('" + projName + "','android', '" + devHost + "');"
