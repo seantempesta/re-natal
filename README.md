@@ -18,6 +18,7 @@ setting up a React Native app running on ClojureScript with Reagent an re-frame.
 Generated project works in iOS and Android devices.
 
 ## State
+- Uses React Native v0.16.0
 - Same codebase for iOS and Android
 - Figwheel used for REPL and live coding.
   - Works in iOS (tested using simulator).
@@ -27,7 +28,7 @@ Generated project works in iOS and Android devices.
   - You can reload app any time, no problem.
   - "Debug in Chrome" is not required anymore.
 - Optimizations :simple is used to compile "production" index.ios.js and index.android.js
-- [Unified way of using static images of rn 0.14](https://facebook.github.io/react-native/docs/images.html) works
+- [Unified way of using static images of rn 0.14+](https://facebook.github.io/react-native/docs/images.html) works
 
 ## Usage
 
