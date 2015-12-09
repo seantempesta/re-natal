@@ -97,12 +97,22 @@ ensureFreePort = (cb) ->
              "
     cb()
 
+ensureXcode = (cb) ->
+  try
+    exec 'type xcodebuild'
+    config = readConfig()
+    unless config.device?
+      config.device = getUuidForDevice 'iPhone 6'
+      writeConfig config
+    cb();
+  catch {message}
+    if message.match /type.+xcodebuild/i
+      logErr 'Xcode Command Line Tools are required'
 
 generateConfig = (name) ->
   log 'Creating Re-Natal config'
   config =
     name:   name
-    device: getUuidForDevice 'iPhone 6'
 
   writeConfig config
   config
@@ -202,8 +212,6 @@ init = (projName) ->
       throw new Error "Directory #{projNameHyph} already exists"
 
     exec 'type lein'
-    exec 'type watchman'
-    exec 'type xcodebuild'
 
     log 'Creating Leiningen project'
     exec "lein new #{projNameHyph}"
@@ -315,10 +323,6 @@ init = (projName) ->
     logErr \
       if message.match /type.+lein/i
         'Leiningen is required (http://leiningen.org)'
-      else if message.match /type.+watchman/i
-        'Watchman is required (https://facebook.github.io/watchman)'
-      else if message.match /type.+xcodebuild/i
-        'Xcode Command Line Tools are required'
       else if message.match /npm/i
         "npm install failed. This may be a network issue. Check #{projNameHyph}/npm-debug.log for details."
       else
@@ -437,7 +441,8 @@ cli.command 'init <name>'
 cli.command 'launch'
   .description 'compile project and run in iOS simulator'
   .action ->
-    ensureFreePort -> launch readConfig()
+    ensureXcode ->
+      ensureFreePort -> launch readConfig()
 
 cli.command 'upgrade'
 .description 'upgrades project files to current installed version of re-natal (the upgrade of re-natal itself is done via npm)'
@@ -447,24 +452,27 @@ cli.command 'upgrade'
 cli.command 'listdevices'
   .description 'list available simulator devices by index'
   .action ->
-    console.log (getDeviceList()
-      .map (line, i) -> "#{i}\t#{line.replace /\[.+\]/, ''}"
-      .join '\n')
+    ensureXcode ->
+      console.log (getDeviceList()
+        .map (line, i) -> "#{i}\t#{line.replace /\[.+\]/, ''}"
+        .join '\n')
 
 cli.command 'setdevice <index>'
   .description 'choose simulator device by index'
   .action (index) ->
-    unless device = getDeviceList()[parseInt index, 10]
-      logErr 'Invalid device index. Run re-natal listdevices for valid indexes.'
+    ensureXcode ->
+      unless device = getDeviceList()[parseInt index, 10]
+        logErr 'Invalid device index. Run re-natal listdevices for valid indexes.'
 
-    config = readConfig()
-    config.device = pluckUuid device
-    writeConfig config
+      config = readConfig()
+      config.device = pluckUuid device
+      writeConfig config
 
 cli.command 'xcode'
   .description 'open Xcode project'
   .action ->
-    openXcode readConfig().name
+    ensureXcode ->
+      openXcode readConfig().name
 
 cli.command 'deps'
   .description 'install all dependencies for the project'

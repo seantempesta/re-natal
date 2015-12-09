@@ -29,6 +29,7 @@ Generated project works in iOS and Android devices.
   - "Debug in Chrome" is not required anymore.
 - Optimizations :simple is used to compile "production" index.ios.js and index.android.js
 - [Unified way of using static images of rn 0.14+](https://facebook.github.io/react-native/docs/images.html) works
+- Works on Linux (Android only)
 
 ## Usage
 
@@ -212,9 +213,8 @@ tools.
     - [Node.js](https://nodejs.org) `>=4.0.0`
 - [Leiningen](http://leiningen.org) `>=2.5.3`
     - [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
-- [Xcode](https://developer.apple.com/xcode) (+ Command Line Tools) `>=6.3`
+- [Xcode](https://developer.apple.com/xcode) (+ Command Line Tools) `>=6.3` (optional for Android)
     - [OS X](http://www.apple.com/osx) `>=10.10`
-- [Watchman](https://facebook.github.io/watchman) `>=3.7.0`
 
 
 ## Aspirations
