@@ -232,11 +232,14 @@ init = (projName) ->
 
     handlersPath = "src/#{projNameUs}/handlers.cljs"
     subsPath = "src/#{projNameUs}/subs.cljs"
+    dbPath = "src/#{projNameUs}/db.cljs"
     exec "cp #{resources}cljs/handlers.cljs #{handlersPath}"
     exec "cp #{resources}cljs/subs.cljs #{subsPath}"
+    exec "cp #{resources}cljs/db.cljs #{dbPath}"
 
     edit handlersPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
     edit subsPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
+    edit dbPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
 
     fs.mkdirSync 'src/cljsjs'
     exec "echo '(ns cljsjs.react)' > src/cljsjs/react.cljs"
@@ -283,8 +286,7 @@ init = (projName) ->
     exec 'npm i'
 
     fs.unlinkSync '.gitignore'
-    exec "
-           node -e
+    exec "node -e
            \"require('react-native/local-cli/cli').init('.', '#{projName}')\"
            "
 
