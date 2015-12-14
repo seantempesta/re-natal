@@ -169,6 +169,9 @@ getBundleId = (name) ->
 
 
 copyDevEnvironmentFiles = (projNameHyph, projName, devHost) ->
+  userNsPath = "env/dev/user.clj"
+  exec "cp #{resources}user.clj #{userNsPath}"
+
   mainIosDevPath = "env/dev/env/ios/main.cljs"
   mainAndroidDevPath = "env/dev/env/android/main.cljs"
 

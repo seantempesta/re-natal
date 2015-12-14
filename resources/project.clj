@@ -15,7 +15,10 @@
                                    ["do" "clean"
                                     ["with-profile" "prod" "cljsbuild" "once" "ios"]
                                     ["with-profile" "prod" "cljsbuild" "once" "android"]]}
-            :profiles {:dev {:cljsbuild    {:builds {:ios     {:source-paths ["src" "env/dev"]
+            :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.0-2"]
+                                            [com.cemerick/piggieback "0.2.1"]]
+                             :source-paths ["src" "env/dev"]
+                             :cljsbuild    {:builds {:ios     {:source-paths ["src" "env/dev"]
                                                                :figwheel     true
                                                                :compiler     {:output-to     "target/ios/not-used.js"
                                                                               :main          "env.ios.main"
@@ -27,7 +30,7 @@
                                                                               :main          "env.android.main"
                                                                               :output-dir    "target/android"
                                                                               :optimizations :none}}}}
-                             }
+                             :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
                        :prod {:cljsbuild {:builds {:ios     {:source-paths ["src" "env/prod"]
                                                              :compiler     {:output-to     "index.ios.js"
                                                                             :main          "env.ios.main"
