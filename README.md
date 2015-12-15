@@ -25,6 +25,7 @@ Generated project works in iOS and Android devices.
   - Works in real Android device
   - Works in Android simulator Genymotion (with re-natal use-figwheel -H 10.0.3.2)
   - Works in stock Android emulator (with re-natal use-figwheel -H 10.0.2.2)
+  - Figwheel REPL can be started within nREPL
   - You can reload app any time, no problem.
   - "Debug in Chrome" is not required anymore.
 - Optimizations :simple is used to compile "production" index.ios.js and index.android.js
@@ -125,6 +126,20 @@ $ lein figwheel android
 Start your simulator and deploy your app:
 ```
 $ react-native run-android
+```
+
+#### Starting Figwheel REPL from nREPL
+To start Figwheel within nREPL session:
+```
+$ lein repl
+```
+Then in the nREPL prompt type:
+```
+user=> (figwheel-ios)
+```
+Or, for Android build type:
+```
+user=> (figwheel-android)
 ```
 
 ## REPL
