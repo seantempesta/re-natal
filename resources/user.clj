@@ -1,32 +1,29 @@
 (ns user
     (:use [figwheel-sidecar.repl-api :as ra]))
-;; This namespace is loaded automatically by nRepl
-;; copy of dev builds in project.cjs
-(def builds {:ios     {:source-paths ["src" "env/dev"]
-                       :figwheel     true
-                       :compiler     {:output-to     "target/ios/not-used.js"
-                                      :main          "env.ios.main"
-                                      :output-dir    "target/ios"
-                                      :optimizations :none}}
-             :android {:source-paths ["src" "env/dev"]
-                       :figwheel     true
-                       :compiler     {:output-to     "target/android/not-used.js"
-                                      :main          "env.android.main"
-                                      :output-dir    "target/android"
-                                      :optimizations :none}}})
+;; This namespace is loaded automatically by nREPL
+
+;; read project.clj to get build configs
+(def profiles (->> "project.clj"
+                   slurp
+                   read-string
+                   (drop-while #(not= % :profiles))
+                   (apply hash-map)
+                   :profiles))
+
+(def cljs-builds (get-in profiles [:dev :cljsbuild :builds]))
 
 (defn figwheel-ios
       "Start figwheel for iOS build"
       []
       (ra/start-figwheel!
-       {:build-ids  ["ios"]
-        :all-builds builds})
+        {:build-ids  ["ios"]
+         :all-builds cljs-builds})
       (ra/cljs-repl))
 
 (defn figwheel-android
       "Start figwheel for Android build"
       []
       (ra/start-figwheel!
-       {:build-ids  ["android"]
-        :all-builds builds})
+        {:build-ids  ["android"]
+         :all-builds cljs-builds})
       (ra/cljs-repl))
