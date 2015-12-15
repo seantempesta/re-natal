@@ -17,6 +17,10 @@ setting up a React Native app running on ClojureScript with Reagent an re-frame.
 
 Generated project works in iOS and Android devices.
 
+For more ClojureScript React Native resources visit [cljsrn.org](http://cljsrn.org).
+
+Contributions are welcome.
+
 ## State
 - Uses React Native v0.16.0
 - Same codebase for iOS and Android
@@ -231,18 +235,3 @@ tools.
 - [Xcode](https://developer.apple.com/xcode) (+ Command Line Tools) `>=6.3` (optional for Android)
     - [OS X](http://www.apple.com/osx) `>=10.10`
 
-
-## Aspirations
-- [x] Xcode-free workflow with CLI tools
-- [x] Templates for other ClojureScript React wrappers
-- [ ] Automatic wrapping of all React Native component functions for ClojureScript
-- [ ] Automatically run React packager in background
-- [ ] Automatically tail cljs build log and report compile errors
-- [ ] Working dev tools
-- [ ] Automatic bundling for offline device usage and App Store distribution
-- [x] Android support
-
-
-Contributions are welcome.
-
-For more ClojureScript React Native resources visit [cljsrn.org](http://cljsrn.org).
