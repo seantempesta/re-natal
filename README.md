@@ -166,7 +166,7 @@ Try this command as an example:
 ## Running on Linux
 In addition to the instructions above on Linux you might need to
 start React Native packager manually with command `react-native start`.
-This was reported in #3
+This was reported in [#3](https://github.com/drapanjanas/re-natal/issues/3)
 
 See also [Linux and Windows support](https://facebook.github.io/react-native/docs/linux-windows-support.html)
 in React Native docs.
