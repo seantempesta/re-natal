@@ -163,6 +163,13 @@ Try this command as an example:
 ```clojure
 (dispatch [:set-greeting "Hello Native World!"])
 ```
+## Running on Linux
+In addition to the instructions above on Linux you might need to
+start React Native packager manually with command `react-native start`.
+This was reported in #3
+
+See also [Linux and Windows support](https://facebook.github.io/react-native/docs/linux-windows-support.html)
+in React Native docs.
 
 ## "Prod" build
 Do this with command:
