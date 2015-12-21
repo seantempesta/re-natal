@@ -15,15 +15,19 @@
 
 (def logo-img (require-img "./images/cljs.png"))
 
+(defn alert [title]
+      (.alert (.-Alert js/React) title))
+
 (defn widget []
   (let [greeting (subscribe [:get-greeting])]
     (fn []
-      [view {:style {:flexDirection "column" :margin 40 :alignItems "center"}}
-       [text {:style {:fontSize 30 :fontWeight "100" :marginBottom 20 :textAlign "center"}} @greeting]
+      [view {:style {:flex-direction "column" :margin 40 :align-items "center"}}
+       [text {:style {:font-size 30 :font-weight "100" :margin-bottom 20 :text-align "center"}} @greeting]
        [image {:source logo-img
-               :style  {:width 80 :height 80 :marginBottom 30}}]
-       [touchable-highlight {:style {:backgroundColor "#999" :padding 10 :borderRadius 5}}
-        [text {:style {:color "white" :textAlign "center" :fontWeight "bold"}} "press me"]]])))
+               :style  {:width 80 :height 80 :margin-bottom 30}}]
+       [touchable-highlight {:style {:background-color "#999" :padding 10 :border-radius 5}
+                             :on-press #(alert "HELLO!")}
+        [text {:style {:color "white" :text-align "center" :font-weight "bold"}} "press me"]]])))
 
 (defn mount-root []
       (r/render [widget] 1))
