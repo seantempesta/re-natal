@@ -58,6 +58,13 @@ edit = (path, pairs) ->
 pluckUuid = (line) ->
   line.match(/\[(.+)\]/)[1]
 
+mkdirSync = (path) ->
+  try
+    fs.mkdirSync(path)
+  catch {message}
+    if not message.match /EEXIST/i
+      throw new Error "Could not create dir #{path}: #{message}" ;
+
 
 getUuidForDevice = (deviceName) ->
   device = getDeviceList().find (line) -> line.match deviceName
@@ -169,6 +176,11 @@ getBundleId = (name) ->
 
 
 copyDevEnvironmentFiles = (projNameHyph, projName, devHost) ->
+  mkdirSync "env/dev"
+  mkdirSync "env/dev/env"
+  mkdirSync "env/dev/env/ios"
+  mkdirSync "env/dev/env/android"
+
   userNsPath = "env/dev/user.clj"
   exec "cp #{resources}user.clj #{userNsPath}"
 
@@ -185,6 +197,11 @@ copyDevEnvironmentFiles = (projNameHyph, projName, devHost) ->
   edit requestImgMacroDevPath, [[devHostRx, devHost]]
 
 copyProdEnvironmentFiles = (projNameHyph, projName) ->
+  mkdirSync "env/prod"
+  mkdirSync "env/prod/env"
+  mkdirSync "env/prod/env/ios"
+  mkdirSync "env/prod/env/android"
+
   mainIosProdPath = "env/prod/env/ios/main.cljs"
   mainAndroidProdPath = "env/prod/env/android/main.cljs"
 
@@ -260,14 +277,6 @@ init = (projName) ->
     edit coreIosPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
 
     fs.mkdirSync "env"
-    fs.mkdirSync "env/dev"
-    fs.mkdirSync "env/dev/env"
-    fs.mkdirSync "env/dev/env/ios"
-    fs.mkdirSync "env/dev/env/android"
-    fs.mkdirSync "env/prod"
-    fs.mkdirSync "env/prod/env"
-    fs.mkdirSync "env/prod/env/ios"
-    fs.mkdirSync "env/prod/env/android"
 
     copyDevEnvironmentFiles(projNameHyph, projName, "localhost")
     copyProdEnvironmentFiles(projNameHyph, projName)
