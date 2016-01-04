@@ -23,10 +23,12 @@ var config = {
     })
 };
 
+var self;
 var scriptQueue = [];
 var server = null; // will be set dynamically
 var fileBasePath = null; // will be set dynamically
 var evaluate = eval; // This is needed, direct calls to eval does not work (RN packager???)
+var externalModules = {};
 
 // evaluates js code ensuring proper ordering
 function customEval(url, javascript, success, error) {
@@ -92,12 +94,25 @@ function importJs(src, success, error) {
 }
 
 
+function interceptRequire() {
+    var oldRequire = window.require;
+    console.info("Shimming require");
+    window.require = function (id) {
+        console.info("Requiring: " + id);
+        if (externalModules[id]) {
+            return externalModules[id];
+        }
+        return oldRequire(id);
+    };
+}
+
 function loadApp(platform, devHost) {
-    server = "http://"+ devHost + ":8081";
+    server = "http://" + devHost + ":8081";
     fileBasePath = config.basePath + platform;
 
     if (typeof goog === "undefined") {
         console.log('Loading Closure base.');
+        interceptRequire();
         importJs('goog/base.js', function () {
             shimBaseGoog();
             fakeLocalStorageAndDocument();
@@ -122,6 +137,11 @@ function startApp(appName, platform, devHost) {
     if (typeof goog === "undefined") {
         loadApp(platform, devHost);
     }
+}
+
+function withModules(moduleById) {
+    externalModules = moduleById;
+    return self;
 }
 
 // Goog fixes
@@ -199,6 +219,9 @@ function shimJsLoader() {
     };
 }
 
-module.exports = {
+self = {
+    withModules: withModules,
     start: startApp
 };
+
+module.exports = self;

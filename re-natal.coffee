@@ -120,6 +120,7 @@ generateConfig = (name) ->
   log 'Creating Re-Natal config'
   config =
     name:   name
+    modules: []
 
   writeConfig config
   config
@@ -408,17 +409,26 @@ getDeviceUuids = ->
   getDeviceList().map (line) -> line.match(/\[(.+)\]/)[1]
 
 
+generateRequireModulesCode = (modules) ->
+  jsCode = "var modules={'react-native': require('react-native')};"
+  for m in modules
+    jsCode += "modules['#{m}']=require('#{m}');";
+  jsCode += '\n'
+
 generateDevScripts = (devHost) ->
   try
-    projName = readConfig().name
+    config = readConfig()
+    projName = config.name
     projNameHyph = projName.replace(camelRx, '$1-$2').toLowerCase()
 
     log 'Cleaning...'
     exec 'lein clean'
 
-    fs.writeFileSync 'index.ios.js', "require('figwheel-bridge').start('" + projName + "','ios', '" + devHost + "');"
+    moduleMap = generateRequireModulesCode config.modules
+
+    fs.writeFileSync 'index.ios.js', "#{moduleMap}require('figwheel-bridge').withModules(modules).start('#{projName}','ios','#{devHost}');"
     log 'index.ios.js was regenerated'
-    fs.writeFileSync 'index.android.js', "require('figwheel-bridge').start('" + projName + "','android', '" + devHost + "');"
+    fs.writeFileSync 'index.android.js', "#{moduleMap}require('figwheel-bridge').withModules(modules).start('#{projName}','android','#{devHost}');"
     log 'index.android.js was regenerated'
 
     copyDevEnvironmentFiles(projNameHyph, projName, devHost)
@@ -441,6 +451,15 @@ doUpgrade = (config) ->
 
   copyFigwheelBridge(projNameUs)
   log 'upgraded figwheel-bridge.js'
+
+useComponent = (name) ->
+  log "Component '#{name}' is now configured for figwheel, please re-run 'use-figwheel' command to take effect"
+  try
+    config = readConfig()
+    config.modules.push name
+    writeConfig(config)
+  catch {message}
+    logErr message
 
 cli._name = 're-natal'
 cli.version pkgJson.version
@@ -508,6 +527,11 @@ cli.command 'use-figwheel'
   .option "-H, --host [host or IP address}]", 'specify server host (default localhost)', "localhost"
   .action (cmd) ->
     generateDevScripts(cmd.host)
+
+cli.command 'use-component <name>'
+  .description 'configures a custom component to work with figwheel. name is the value you pass to (js/require) function.'
+  .action (name) ->
+    useComponent(name)
 
 cli.on '*', (command) ->
   logErr "unknown command #{command[0]}. See re-natal --help for valid commands"
