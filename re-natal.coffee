@@ -452,6 +452,12 @@ doUpgrade = (config) ->
   copyFigwheelBridge(projNameUs)
   log 'upgraded figwheel-bridge.js'
 
+  if (!config.modules)
+    config.modules = []
+
+  writeConfig(config)
+  log 'upgraded .re-natal'
+
 useComponent = (name) ->
   log "Component '#{name}' is now configured for figwheel, please re-run 'use-figwheel' command to take effect"
   try
