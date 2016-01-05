@@ -184,7 +184,7 @@ follow the RN docs to proceed with the release.
 
 ## Using external React Native Components
 
-Lets say you have installed and external library from npm like this:
+Lets say you have installed an external library from npm like this:
 ```
 $ npm i some-library --save
 ```
