@@ -32,6 +32,7 @@ Contributions are welcome.
   - Figwheel REPL can be started within nREPL
   - You can reload app any time, no problem.
   - "Debug in Chrome" is not required anymore.
+  - Custom react-native components are supported (with re-natal use-component <name>)
 - Optimizations :simple is used to compile "production" index.ios.js and index.android.js
 - [Unified way of using static images of rn 0.14+](https://facebook.github.io/react-native/docs/images.html) works
 - Works on Linux (Android only)
@@ -180,6 +181,35 @@ It will clean and rebuild index.ios.js and index.android.js with `optimizations 
 
 Having index.ios.js and index.android.js build this way, you should be able to
 follow the RN docs to proceed with the release.
+
+## Using external React Native Components
+
+Lets say you have installed and external library from npm like this:
+```
+$ npm i some-library --save
+```
+
+And you want to use a component called 'some-library/Component':
+```clojure
+(def Component (js/require "some-library/Component"))
+```
+This would work when you do `lein prod-build` and run your app, but will fail when you run with figwheel.
+React Native packager statically scans for all calls to `require` function and prepares the required
+code to be available at runtime. But, dynamically loaded (by figwheel) code bypass this scan
+and therefore require of custom component fails.
+
+To overcome this execute command:
+```
+$ re-natal use-component some-library/Component
+```
+Then, regenerate index.\*.js files:
+```
+$ re-natal use-figwheel
+```
+And last thing, probably, you will have to restart the packager and refresh your app.
+
+NOTE: if you mistyped something, or no longer use the component and would like to remove it,
+please, manually open .re-natal file and fix it there (its just a list of names in json format, so should be straight forward)
 
 ## Upgrading existing Re-Natal project
 Do this if you want to use newer version of re-natal.
