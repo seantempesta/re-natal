@@ -40,7 +40,7 @@ Contributions are welcome.
 ## Usage
 
 Before getting started, make sure you have the
-[required dependencies](#dependencies) installed.fix in
+[required dependencies](#dependencies) installed.
 
 Then, install the CLI using npm:
 
@@ -267,6 +267,7 @@ tools.
 
 - [npm](https://www.npmjs.com) `>=1.4`
     - [Node.js](https://nodejs.org) `>=4.0.0`
+- [react-native-cli](https://www.npmjs.com/package/react-native-cli) `>=0.1.7` (install with `npm install -g react-native-cli`)
 - [Leiningen](http://leiningen.org) `>=2.5.3`
     - [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
 - [Xcode](https://developer.apple.com/xcode) (+ Command Line Tools) `>=6.3` (optional for Android)
