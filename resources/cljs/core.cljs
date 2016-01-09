@@ -18,7 +18,7 @@
 (defn alert [title]
       (.alert (.-Alert js/React) title))
 
-(defn widget []
+(defn app-root []
   (let [greeting (subscribe [:get-greeting])]
     (fn []
       [view {:style {:flex-direction "column" :margin 40 :align-items "center"}}
@@ -29,9 +29,6 @@
                              :on-press #(alert "HELLO!")}
         [text {:style {:color "white" :text-align "center" :font-weight "bold"}} "press me"]]])))
 
-(defn mount-root []
-      (r/render [widget] 1))
-
-(defn ^:export init []
+(defn init []
       (dispatch-sync [:initialize-db])
-      (.registerRunnable app-registry "$PROJECT_NAME$" #(mount-root)))
+      (.registerComponent app-registry "$PROJECT_NAME$" #(r/reactify-component app-root)))
