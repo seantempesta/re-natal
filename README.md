@@ -212,9 +212,9 @@ NOTE: if you mistyped something, or no longer use the component and would like t
 please, manually open .re-natal file and fix it there (its just a list of names in json format, so should be straight forward)
 
 ## Static Images
-Since version 0.14 React Native supports a [Unified way of referencing static images](https://facebook.github.io/react-native/docs/images.html)
+Since version 0.14 React Native supports a [unified way of referencing static images](https://facebook.github.io/react-native/docs/images.html)
 
-In Re-Natal skeleton images are stored in "images" directory. Place your images and reference them from cljs code:
+In Re-Natal skeleton images are stored in "images" directory. Place your images there and reference them from cljs code:
 ```clojure
 (def my-img (js/require "./images/my-img.png"))
 ```
