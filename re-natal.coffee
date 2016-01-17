@@ -77,7 +77,6 @@ getUuidForDevice = (deviceName) ->
 toUnderscored = (s) ->
   s.replace(camelRx, '$1_$2').toLowerCase()
 
-
 checkPort = (port, cb) ->
   sock = net.connect {port}, ->
     sock.end()
@@ -121,6 +120,7 @@ generateConfig = (name) ->
   config =
     name:   name
     modules: []
+    imageDirs: ["images"]
 
   writeConfig config
   config
@@ -175,6 +175,24 @@ getBundleId = (name) ->
   catch {message}
     logErr message
 
+scanImageDir = (dir) ->
+  fnames = fs.readdirSync(dir)
+    .map (fname) -> "#{dir}/#{fname}"
+    .filter (path) -> fs.statSync(path).isFile()
+    .map (path) -> path.replace /@2x|@3x/i, ''
+    .filter (v, idx, slf) -> slf.indexOf(v) == idx
+
+  dirs = fs.readdirSync(dir)
+    .map (fname) -> "#{dir}/#{fname}"
+    .filter (path) -> fs.statSync(path).isDirectory()
+
+  fnames.concat scanImages(dirs)
+
+scanImages = (dirs) ->
+  imgs = []
+  for dir in dirs
+    imgs = imgs.concat(scanImageDir(dir));
+  imgs
 
 copyDevEnvironmentFiles = (projNameHyph, projName, devHost) ->
   mkdirSync "env/dev"
@@ -193,10 +211,6 @@ copyDevEnvironmentFiles = (projNameHyph, projName, devHost) ->
   exec "cp #{resources}cljs/main_dev.cljs #{mainAndroidDevPath}"
   edit mainAndroidDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"], [devHostRx, devHost]]
 
-  requestImgMacroDevPath = "env/dev/env/require_img.clj"
-  exec "cp #{resources}require_img_dev.clj #{requestImgMacroDevPath}"
-  edit requestImgMacroDevPath, [[devHostRx, devHost]]
-
 copyProdEnvironmentFiles = (projNameHyph, projName) ->
   mkdirSync "env/prod"
   mkdirSync "env/prod/env"
@@ -210,9 +224,6 @@ copyProdEnvironmentFiles = (projNameHyph, projName) ->
   edit mainIosProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
   exec "cp #{resources}cljs/main_prod.cljs #{mainAndroidProdPath}"
   edit mainAndroidProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"]]
-
-  requestImgMacroProdPath = "env/prod/env/require_img.clj"
-  exec "cp #{resources}require_img_prod.clj #{requestImgMacroProdPath}"
 
 copyFigwheelBridge = (projNameUs) ->
   exec "cp #{resources}figwheel-bridge.js ."
@@ -424,7 +435,9 @@ generateDevScripts = (devHost) ->
     log 'Cleaning...'
     exec 'lein clean'
 
-    moduleMap = generateRequireModulesCode config.modules
+    images = scanImages(config.imageDirs).map (fname) -> './' + fname;
+    modulesAndImages = config.modules.concat images;
+    moduleMap = generateRequireModulesCode modulesAndImages
 
     fs.writeFileSync 'index.ios.js', "#{moduleMap}require('figwheel-bridge').withModules(modules).start('#{projName}','ios','#{devHost}');"
     log 'index.ios.js was regenerated'
@@ -454,6 +467,9 @@ doUpgrade = (config) ->
 
   if (!config.modules)
     config.modules = []
+
+  if (!config.imageDirs)
+    config.imageDirs = ["images"]
 
   writeConfig(config)
   log 'upgraded .re-natal'

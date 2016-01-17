@@ -1,5 +1,4 @@
 (ns ^:figwheel-load $PROJECT_NAME_HYPHENATED$.$PLATFORM$.core
-  (:require-macros [env.require-img :refer [require-img]])
   (:require [reagent.core :as r :refer [atom]]
             [re-frame.core :refer [subscribe dispatch dispatch-sync]]
             [$PROJECT_NAME_HYPHENATED$.handlers]
@@ -13,7 +12,7 @@
 (def image (r/adapt-react-class (.-Image js/React)))
 (def touchable-highlight (r/adapt-react-class (.-TouchableHighlight js/React)))
 
-(def logo-img (require-img "./images/cljs.png"))
+(def logo-img (js/require "./images/cljs.png"))
 
 (defn alert [title]
       (.alert (.-Alert js/React) title))
