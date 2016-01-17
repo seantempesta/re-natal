@@ -211,6 +211,21 @@ And last thing, probably, you will have to restart the packager and refresh your
 NOTE: if you mistyped something, or no longer use the component and would like to remove it,
 please, manually open .re-natal file and fix it there (its just a list of names in json format, so should be straight forward)
 
+## Static Images
+Since version 0.14 React Native supports a [Unified way of referencing static images](https://facebook.github.io/react-native/docs/images.html)
+
+In Re-Natal skeleton images are stored in "images" directory. Place your images and reference them from cljs code:
+```clojure
+(def my-img (js/require "./images/my-img.png"))
+```
+#### Adding an image during development
+When you have dropped a new image to "images" dir, you need to restart RN packager and re-run command:
+```
+$ re-natal use-figwheel
+```
+This is needed to regenerate index.\*.js files which includes `require` calls to all local images.
+After this you can use a new image in your cljs code.
+
 ## Upgrading existing Re-Natal project
 Do this if you want to use newer version of re-natal.
 
