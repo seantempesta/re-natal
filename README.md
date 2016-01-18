@@ -22,7 +22,7 @@ For more ClojureScript React Native resources visit [cljsrn.org](http://cljsrn.o
 Contributions are welcome.
 
 ## State
-- Uses React Native v0.17.0
+- Uses React Native v0.18.0
 - Same codebase for iOS and Android
 - Figwheel used for REPL and live coding.
   - Works in iOS (tested using simulator).
