@@ -8,13 +8,14 @@ var CLOSURE_UNCOMPILED_DEFINES = null;
 
 var config = {
     basePath: "target/",
-    googBasePath: 'goog/'
+    googBasePath: 'goog/',
+    serverPort: 8081
 };
 
 var React = require('react-native');
 var self;
 var scriptQueue = [];
-var server = null; // will be set dynamically
+var serverHost = null; // will be set dynamically
 var fileBasePath = null; // will be set dynamically
 var evaluate = eval; // This is needed, direct calls to eval does not work (RN packager???)
 var externalModules = {};
@@ -74,9 +75,12 @@ function customEval(url, javascript, success, error) {
         error()
     }
 }
-function asyncImportScripts(path, success, error) {
-    var url = server + '/' + path;
 
+var isChrome = function () {
+    return typeof importScripts === "function"
+};
+
+function asyncImportScripts(url, success, error) {
     console.info('(asyncImportScripts) Importing: ' + url);
     scriptQueue.push(url);
     fetch(url)
@@ -93,7 +97,20 @@ function asyncImportScripts(path, success, error) {
         });
 }
 
-// Async load of javascript files
+function syncImportScripts(url, success, error) {
+    try {
+        importScripts(url);
+        console.info('Evaluated: ' + url);
+        evalListeners.forEach(function (listener) {
+            listener(url)
+        });
+        success();
+    } catch (e) {
+        error()
+    }
+}
+
+// Loads js file sync if possible or async.
 function importJs(src, success, error) {
     if (typeof success !== 'function') {
         success = function () {
@@ -104,10 +121,14 @@ function importJs(src, success, error) {
         };
     }
 
-    var filePath = fileBasePath + '/' + src;
+    var file = fileBasePath + '/' + src;
 
-    console.info('(importJs) Importing: ' + filePath);
-    asyncImportScripts(filePath, success, error);
+    console.info('(importJs) Importing: ' + file);
+    if (isChrome()) {
+        syncImportScripts(serverBaseUrl("localhost") + '/' + file, success, error);
+    } else {
+        asyncImportScripts(serverBaseUrl(serverHost) + '/' + file, success, error);
+    }
 }
 
 function interceptRequire() {
@@ -127,8 +148,12 @@ function debugToLog() {
     console.debug = console.log;
 }
 
+function serverBaseUrl(host) {
+    return "http://" + host + ":" + config.serverPort
+}
+
 function loadApp(platform, devHost, onLoadCb) {
-    server = "http://" + devHost + ":8081";
+    serverHost = devHost;
     fileBasePath = config.basePath + platform;
 
     evalListeners.push(function (url) {
