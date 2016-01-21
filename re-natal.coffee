@@ -235,9 +235,8 @@ updateGitIgnore = () ->
 
 patchReactNativePackager = () ->
   log "Patching react-native packager to serve *.map files"
-  edit "node_modules/react-native/packager/react-packager/src/Server/index.js", [
-    [/^(\s*requestType\s*=\s*'map'\s*;)$/m, "//$1"],
-    [/^(\s*}\s*else\s*if.*pathname\.match.*\.map.*\{)$/m, "//$1"]]
+  edit "node_modules/react-native/packager/react-packager/src/Server/index.js",
+    [[/match.*\.map\$\/\)/m, "match(/index\\..*\\.map$/)"]]
 
 init = (projName) ->
   if projName.toLowerCase() is 'react' or !projName.match validNameRx
