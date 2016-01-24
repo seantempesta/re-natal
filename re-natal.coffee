@@ -120,6 +120,7 @@ generateConfig = (name) ->
   log 'Creating Re-Natal config'
   config =
     name:   name
+    androidHost: "localhost"
     modules: []
     imageDirs: ["images"]
 
@@ -194,6 +195,19 @@ scanImages = (dirs) ->
   for dir in dirs
     imgs = imgs.concat(scanImageDir(dir));
   imgs
+
+configureDevHostForAndroidDevice = (deviceType) ->
+  try
+    allowedTypes = {'real': 'localhost', 'avd': '10.0.2.2', 'genymotion': '10.0.3.2'}
+    devHost = allowedTypes[deviceType]
+    if (! devHost?)
+      throw new Error "Unknown android device type #{deviceType}, known types are #{Object.keys(allowedTypes)}"
+    log "Using host '#{devHost}' for android device type '#{deviceType}'"
+    config = readConfig()
+    config.androidHost = devHost
+    writeConfig(config)
+  catch {message}
+    logErr message
 
 copyDevEnvironmentFiles = (projNameHyph, projName, devHost) ->
   mkdirSync "env/dev"
@@ -439,7 +453,7 @@ updateFigwheelUrlForAndroid= (devHost) ->
 
   edit mainAndroidDevPath, [[figwheelUrlRx, "ws://#{devHost}:"]]
 
-generateDevScripts = (devHost) ->
+generateDevScripts = () ->
   try
     config = readConfig()
     projName = config.name
@@ -451,14 +465,16 @@ generateDevScripts = (devHost) ->
     modulesAndImages = config.modules.concat images;
     moduleMap = generateRequireModulesCode modulesAndImages
 
+    androidDevHost = config.androidHost
+
     fs.writeFileSync 'index.ios.js', "#{moduleMap}require('figwheel-bridge').withModules(modules).start('#{projName}','ios','localhost');"
     log 'index.ios.js was regenerated'
-    fs.writeFileSync 'index.android.js', "#{moduleMap}require('figwheel-bridge').withModules(modules).start('#{projName}','android','#{devHost}');"
+    fs.writeFileSync 'index.android.js', "#{moduleMap}require('figwheel-bridge').withModules(modules).start('#{projName}','android','#{androidDevHost}');"
     log 'index.android.js was regenerated'
 
-    updateFigwheelUrlForAndroid(devHost)
+    updateFigwheelUrlForAndroid(androidDevHost)
     log 'Dev server host for iOS: localhost'
-    log 'Dev server host for Android: ' + devHost
+    log 'Dev server host for Android: ' + androidDevHost
 
   catch {message}
     logErr \
@@ -486,6 +502,9 @@ doUpgrade = (config) ->
 
   if (!config.imageDirs)
     config.imageDirs = ["images"]
+
+  if (!config.androidHost)
+    config.androidHost = "localhost"
 
   writeConfig(config)
   log 'upgraded .re-natal'
@@ -565,9 +584,13 @@ cli.command 'deps'
 
 cli.command 'use-figwheel'
   .description 'generate index.ios.js and index.android.js for development with figwheel'
-  .option "-H, --host [host or IP address}]", 'specify server host (default localhost)', "localhost"
-  .action (cmd) ->
-    generateDevScripts(cmd.host)
+  .action () ->
+    generateDevScripts()
+
+cli.command 'use-android-device <type>'
+  .description 'sets up the host for android device type: \'real\' - localhost, \'avd\' - 10.0.2.2, \'genymotion\' - 10.0.3.2'
+  .action (type) ->
+    configureDevHostForAndroidDevice type
 
 cli.command 'use-component <name>'
   .description 'configures a custom component to work with figwheel. name is the value you pass to (js/require) function.'

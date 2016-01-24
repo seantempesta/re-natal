@@ -30,8 +30,8 @@ Contributions are welcome.
   - Works in Android simulator Genymotion (with re-natal use-figwheel -H 10.0.3.2)
   - Works in stock Android emulator (with re-natal use-figwheel -H 10.0.2.2)
   - Figwheel REPL can be started within nREPL
+  - Simultaneous development of iOS and Android apps is supported
   - You can reload app any time, no problem.
-  - "Debug in Chrome" is not required anymore.
   - Custom react-native components are supported (with re-natal use-component <name>)
   - Source maps are available when you "Debug in Chrome"
 - Optimizations :simple is used to compile "production" index.ios.js and index.android.js
@@ -114,7 +114,8 @@ $ react-native run-android
 With genymotion Android simulator you have to use IP "10.0.3.2" in urls to refer to your local machine.
 To specify this use:
 ```
-$ re-natal use-figwheel -H 10.0.3.2
+$ re-natal use-android-device genymotion
+$ re-natal use-figwheel
 $ lein figwheel android
 ```
 Start your simulator and deploy your app:
@@ -126,13 +127,29 @@ $ react-native run-android
 With stock Android emulator you have to use IP "10.0.2.2" in urls to refer to your local machine.
 To specify this use:
 ```
-$ re-natal use-figwheel -H 10.0.2.2
+$ re-natal use-android-device avd
+$ re-natal use-figwheel
 $ lein figwheel android
 ```
 Start your simulator and deploy your app:
 ```
 $ react-native run-android
 ```
+#### Swiching between Android devices
+If you have to switch from using genymotion to real android device you have to execute `use-android-device`
+command and `use-figwheel`:
+```
+$ re-natal use-android-device <real|genymotion|avd>
+$ re-natal use-figwheel
+$ lein figwheel android
+```
+
+#### Developing iOS and Android apps simultaneously
+```
+$ re-natal use-figwheel
+$ lein figwheel ios android
+```
+Then start iOS app from xcode, and Android by executing `react-native run-android`
 
 #### Starting Figwheel REPL from nREPL
 To start Figwheel within nREPL session:
@@ -141,11 +158,15 @@ $ lein repl
 ```
 Then in the nREPL prompt type:
 ```
-user=> (figwheel-ios)
+user=> (start-figwheel "ios")
 ```
 Or, for Android build type:
 ```
-user=> (figwheel-android)
+user=> (start-figwheel "android")
+```
+Or, for both type:
+```
+user=> (start-figwheel "ios" "android")
 ```
 
 ## REPL

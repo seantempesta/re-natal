@@ -12,18 +12,15 @@
 
 (def cljs-builds (get-in profiles [:dev :cljsbuild :builds]))
 
-(defn figwheel-ios
-      "Start figwheel for iOS build"
-      []
+(defn start-figwheel
+      "Start figwheel for one or more builds"
+      [& build-ids]
       (ra/start-figwheel!
-        {:build-ids  ["ios"]
+        {:build-ids  build-ids
          :all-builds cljs-builds})
       (ra/cljs-repl))
 
-(defn figwheel-android
-      "Start figwheel for Android build"
+(defn stop-figwheel
+      "Stops figwheel"
       []
-      (ra/start-figwheel!
-        {:build-ids  ["android"]
-         :all-builds cljs-builds})
-      (ra/cljs-repl))
+      (ra/stop-figwheel!))
