@@ -136,8 +136,7 @@ Start your simulator and deploy your app:
 $ react-native run-android
 ```
 #### Swiching between Android devices
-If you have to switch from using genymotion to real android device you have to execute `use-android-device`
-command and `use-figwheel`:
+Run `use-android-device` to configure device type you want to use in development:
 ```
 $ re-natal use-android-device <real|genymotion|avd>
 $ re-natal use-figwheel
