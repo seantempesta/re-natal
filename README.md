@@ -27,8 +27,8 @@ Contributions are welcome.
 - Figwheel used for REPL and live coding.
   - Works in iOS (real device and simulator).
   - Works in real Android device
-  - Works in Android simulator Genymotion (with re-natal use-figwheel -H 10.0.3.2)
-  - Works in stock Android emulator (with re-natal use-figwheel -H 10.0.2.2)
+  - Works in Android simulator Genymotion (with re-natal use-android-device genymotion)
+  - Works in stock Android emulator (with re-natal use-android-device avd)
   - Figwheel REPL can be started within nREPL
   - Simultaneous development of iOS and Android apps is supported
   - You can reload app any time, no problem.
@@ -280,6 +280,9 @@ It would be perfect not to do any changes there, but...
 the react native packager to serve \*.map files from file system and generate only index.\*.map file.
 To achieve this [this line](https://github.com/facebook/react-native/blob/master/packager/react-packager/src/Server/index.js#L400)
 of file "node_modules/react-native/packager/react-packager/src/Server/index.js" is modified to match only index.\*.map
+
+## Example Apps
+* [Luno](https://github.com/alwx/luno-react-native) is a demo mobile application written in ClojureScript.
 
 ## Tips
 - Having `rlwrap` installed is optional but highly recommended since it makes
