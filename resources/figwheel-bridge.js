@@ -163,8 +163,9 @@ function loadApp(platform, devHost, onLoadCb) {
     });
 
     // callback when app is ready to get the reloadable component
+    var mainJs = '/env/' + platform + '/main.js';
     evalListeners.push(function (url) {
-        if (url.indexOf('main.js') > -1) {
+        if (url.indexOf(mainJs) > -1) {
             onLoadCb(env[platform].main.root_el);
             console.log('Done loading Clojure app');
         }
