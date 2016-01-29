@@ -12,6 +12,7 @@ child   = require 'child_process'
 cli     = require 'commander'
 chalk   = require 'chalk'
 semver  = require 'semver'
+ckDeps  = require 'check-dependencies'
 pkgJson = require __dirname + '/package.json'
 
 nodeVersion     = pkgJson.engines.node
@@ -26,7 +27,6 @@ devHostRx       = /\$DEV_HOST\$/g
 figwheelUrlRx   = /ws:\/\/[0-9a-zA-Z\.]*:/g
 rnVersion       = '0.18.1'
 rnPackagerPort  = 8081
-podMinVersion   = '0.38.2'
 process.title   = 're-natal'
 sampleCommand  = '(dispatch [:set-greeting "Hello Native World!"])'
 
@@ -138,10 +138,18 @@ writeConfig = (config) ->
       else
         message
 
+verifyConfig = (config) ->
+  if !config.androidHost? || !config.modules? || !config.imageDirs?
+    throw new Error 're-natal project needs to be upgraded, please run: re-natal upgrade'
+  config
 
-readConfig = ->
+readConfig = (verify = true)->
   try
-    JSON.parse readFile '.re-natal'
+    config = JSON.parse readFile '.re-natal'
+    if (verify)
+      verifyConfig(config)
+    else
+      config
   catch {message}
     logErr \
       if message.match /ENOENT/i
@@ -458,6 +466,10 @@ generateDevScripts = () ->
     config = readConfig()
     projName = config.name
 
+    depState = ckDeps.sync {install: false, verbose: false}
+    if (!depState.depsWereOk)
+      throw new Error "Missing dependencies, please run: re-natal deps"
+
     log 'Cleaning...'
     exec 'lein clean'
 
@@ -487,6 +499,8 @@ doUpgrade = (config) ->
   projName = config.name;
   projNameHyph = projName.replace(camelRx, '$1-$2').toLowerCase()
   projNameUs   = toUnderscored projName
+
+  ckDeps.sync {install: true, verbose: false}
 
   patchReactNativePackager()
 
@@ -546,7 +560,7 @@ cli.command 'launch'
 cli.command 'upgrade'
 .description 'upgrades project files to current installed version of re-natal (the upgrade of re-natal itself is done via npm)'
 .action ->
-  doUpgrade readConfig()
+  doUpgrade readConfig(false)
 
 cli.command 'listdevices'
   .description 'list available simulator devices by index'
@@ -576,11 +590,7 @@ cli.command 'xcode'
 cli.command 'deps'
   .description 'install all dependencies for the project'
   .action ->
-    try
-      log 'Installing npm packages'
-      exec 'npm i'
-    catch {message}
-      logErr message
+    ckDeps.sync {install: true, verbose: true}
 
 cli.command 'use-figwheel'
   .description 'generate index.ios.js and index.android.js for development with figwheel'
