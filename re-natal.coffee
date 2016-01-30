@@ -523,6 +523,10 @@ doUpgrade = (config) ->
   writeConfig(config)
   log 'upgraded .re-natal'
 
+  edit "src/#{projNameUs}/ios/core.cljs", [[/\^:figwheel-load\s/g, ""]]
+  edit "src/#{projNameUs}/android/core.cljs", [[/\^:figwheel-load\s/g, ""]]
+  log 'upgraded core.cljs'
+
   edit '.gitignore', [[/^\s*env\/dev\s*$/m, ""]]
   gignore = readFile '.gitignore'
   if (!gignore.match /^\s*target\/\s*$/m)
