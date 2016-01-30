@@ -1,4 +1,4 @@
-(ns ^:figwheel-load $PROJECT_NAME_HYPHENATED$.$PLATFORM$.core
+(ns $PROJECT_NAME_HYPHENATED$.$PLATFORM$.core
   (:require [reagent.core :as r :refer [atom]]
             [re-frame.core :refer [subscribe dispatch dispatch-sync]]
             [$PROJECT_NAME_HYPHENATED$.handlers]
