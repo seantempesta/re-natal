@@ -45,6 +45,12 @@ exec = (cmd, keepOutput) ->
   else
     child.execSync cmd, stdio: 'ignore'
 
+executableAvailable = (executable) ->
+  try
+    exec executable
+    return true
+  catch
+    return false
 
 readFile = (path) ->
   fs.readFileSync path, encoding: 'ascii'
@@ -275,7 +281,9 @@ init = (projName) ->
     if fs.existsSync projNameHyph
       throw new Error "Directory #{projNameHyph} already exists"
 
-    exec 'lein'
+    if not executableAvailable 'lein'
+      logErr 'Leiningen is required (http://leiningen.org)'
+      return
 
     log 'Creating Leiningen project'
     exec "lein new #{projNameHyph}"
@@ -383,9 +391,7 @@ init = (projName) ->
 
   catch {message}
     logErr \
-      if message.match /type.+lein/i
-        'Leiningen is required (http://leiningen.org)'
-      else if message.match /npm/i
+      if message.match /npm/i
         "npm install failed. This may be a network issue. Check #{projNameHyph}/npm-debug.log for details."
       else
         message
