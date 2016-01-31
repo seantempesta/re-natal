@@ -67,10 +67,8 @@ $ cd future-app
 ```
 To run in iOS:
 ```
-$ re-natal xcode
+$ react-native run-ios
 ```
-and then run your app from Xcode normally.
-
 To run in Android, connect your device and:
 ```
 $ adb reverse tcp:8081 tcp:8081
@@ -85,7 +83,7 @@ Luckily, this can be improved by compiling with `optimizations :none` and using
 Figwheel.
 
 #### Using Figwheel in iOS simulator
-Start your app from Xcode as described above.
+Start your app from Xcode, or just run `react-native run-ios`
 
 Then, to start development mode execute commands:
 ```
