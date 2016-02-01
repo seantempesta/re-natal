@@ -7,6 +7,7 @@
 fs      = require 'fs-extra'
 net     = require 'net'
 http    = require 'http'
+os      = require 'os'
 crypto  = require 'crypto'
 child   = require 'child_process'
 cli     = require 'commander'
@@ -45,12 +46,14 @@ exec = (cmd, keepOutput) ->
   else
     child.execSync cmd, stdio: 'ignore'
 
-executableAvailable = (executable) ->
-  try
-    exec executable
-    return true
-  catch
-    return false
+ensureExecutableAvailable = (executable) ->
+  if os.platform() == 'win32'
+    try
+      exec "where #{executable}"
+    catch e
+      throw new Error("type: #{executable}: not found")
+  else
+    exec "type #{executable}"
 
 readFile = (path) ->
   fs.readFileSync path, encoding: 'ascii'
@@ -281,9 +284,7 @@ init = (projName) ->
     if fs.existsSync projNameHyph
       throw new Error "Directory #{projNameHyph} already exists"
 
-    if not executableAvailable 'lein'
-      logErr 'Leiningen is required (http://leiningen.org)'
-      return
+    ensureExecutableAvailable 'lein'
 
     log 'Creating Leiningen project'
     exec "lein new #{projNameHyph}"
@@ -391,7 +392,9 @@ init = (projName) ->
 
   catch {message}
     logErr \
-      if message.match /npm/i
+      if message.match /type.+lein/i
+        'Leiningen is required (http://leiningen.org)'
+      else if message.match /npm/i
         "npm install failed. This may be a network issue. Check #{projNameHyph}/npm-debug.log for details."
       else
         message
