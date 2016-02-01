@@ -55,6 +55,12 @@ ensureExecutableAvailable = (executable) ->
   else
     exec "type #{executable}"
 
+ensureOSX = (cb) ->
+  if os.platform() == 'darwin'
+    cb()
+  else
+    logErr 'This command is only available on OSX'
+
 readFile = (path) ->
   fs.readFileSync path, encoding: 'ascii'
 
@@ -115,7 +121,7 @@ ensureFreePort = (cb) ->
 
 ensureXcode = (cb) ->
   try
-    exec 'type xcodebuild'
+    ensureExecutableAvailable 'xcodebuild'
     config = readConfig()
     unless config.device?
       config.device = getUuidForDevice 'iPhone 6'
@@ -570,8 +576,9 @@ cli.command 'init <name>'
 cli.command 'launch'
   .description 'compile project and run in iOS simulator'
   .action ->
-    ensureXcode ->
-      ensureFreePort -> launch readConfig()
+    ensureOSX ->
+      ensureXcode ->
+        ensureFreePort -> launch readConfig()
 
 cli.command 'upgrade'
 .description 'upgrades project files to current installed version of re-natal (the upgrade of re-natal itself is done via npm)'
@@ -581,27 +588,30 @@ cli.command 'upgrade'
 cli.command 'listdevices'
   .description 'list available simulator devices by index'
   .action ->
-    ensureXcode ->
-      console.log (getDeviceList()
-        .map (line, i) -> "#{i}\t#{line.replace /\[.+\]/, ''}"
-        .join '\n')
+    ensureOSX ->
+      ensureXcode ->
+        console.log (getDeviceList()
+          .map (line, i) -> "#{i}\t#{line.replace /\[.+\]/, ''}"
+          .join '\n')
 
 cli.command 'setdevice <index>'
   .description 'choose simulator device by index'
   .action (index) ->
-    ensureXcode ->
-      unless device = getDeviceList()[parseInt index, 10]
-        logErr 'Invalid device index. Run re-natal listdevices for valid indexes.'
+    ensureOSX ->
+      ensureXcode ->
+        unless device = getDeviceList()[parseInt index, 10]
+          logErr 'Invalid device index. Run re-natal listdevices for valid indexes.'
 
-      config = readConfig()
-      config.device = pluckUuid device
-      writeConfig config
+        config = readConfig()
+        config.device = pluckUuid device
+        writeConfig config
 
 cli.command 'xcode'
   .description 'open Xcode project'
   .action ->
-    ensureXcode ->
-      openXcode readConfig().name
+    ensureOSX ->
+      ensureXcode ->
+        openXcode readConfig().name
 
 cli.command 'deps'
   .description 'install all dependencies for the project'
