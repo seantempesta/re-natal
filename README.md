@@ -36,7 +36,7 @@ Contributions are welcome.
   - Source maps are available when you "Debug in Chrome"
 - Optimizations :simple is used to compile "production" index.ios.js and index.android.js
 - [Unified way of using static images of rn 0.14+](https://facebook.github.io/react-native/docs/images.html) works
-- Works on Linux (Android only)
+- Works on Linux and Windows (Android only)
 
 ## Usage
 

@@ -1,6 +1,6 @@
 {
   "name": "re-natal",
-  "version": "0.2.21",
+  "version": "0.2.22",
   "description": "Bootstrap ClojureScript React Native apps with reagent and re-frame for iOS and Android",
   "main": "index.js",
   "author": "Artur Girenko <a.girenko@gmail.com>",
