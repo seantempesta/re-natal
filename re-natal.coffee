@@ -4,9 +4,10 @@
 # http://oxism.com
 # MIT License
 
-fs      = require 'fs'
+fs      = require 'fs-extra'
 net     = require 'net'
 http    = require 'http'
+os      = require 'os'
 crypto  = require 'crypto'
 child   = require 'child_process'
 cli     = require 'commander'
@@ -45,6 +46,14 @@ exec = (cmd, keepOutput) ->
   else
     child.execSync cmd, stdio: 'ignore'
 
+ensureExecutableAvailable = (executable) ->
+  if os.platform() == 'win32'
+    try
+      exec "where #{executable}"
+    catch e
+      throw new Error("type: #{executable}: not found")
+  else
+    exec "type #{executable}"
 
 readFile = (path) ->
   fs.readFileSync path, encoding: 'ascii'
@@ -224,14 +233,14 @@ copyDevEnvironmentFiles = (projNameHyph, projName, devHost) ->
   mkdirSync "env/dev/env/android"
 
   userNsPath = "env/dev/user.clj"
-  exec "cp #{resources}user.clj #{userNsPath}"
+  fs.copySync("#{resources}user.clj", userNsPath)
 
   mainIosDevPath = "env/dev/env/ios/main.cljs"
   mainAndroidDevPath = "env/dev/env/android/main.cljs"
 
-  exec "cp #{resources}cljs/main_dev.cljs #{mainIosDevPath}"
+  fs.copySync("#{resources}cljs/main_dev.cljs", mainIosDevPath)
   edit mainIosDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"], [devHostRx, devHost] ]
-  exec "cp #{resources}cljs/main_dev.cljs #{mainAndroidDevPath}"
+  fs.copySync("#{resources}cljs/main_dev.cljs", mainAndroidDevPath)
   edit mainAndroidDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"], [devHostRx, devHost]]
 
 copyProdEnvironmentFiles = (projNameHyph, projName) ->
@@ -243,13 +252,13 @@ copyProdEnvironmentFiles = (projNameHyph, projName) ->
   mainIosProdPath = "env/prod/env/ios/main.cljs"
   mainAndroidProdPath = "env/prod/env/android/main.cljs"
 
-  exec "cp #{resources}cljs/main_prod.cljs #{mainIosProdPath}"
+  fs.copySync("#{resources}cljs/main_prod.cljs", mainIosProdPath)
   edit mainIosProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
-  exec "cp #{resources}cljs/main_prod.cljs #{mainAndroidProdPath}"
+  fs.copySync("#{resources}cljs/main_prod.cljs", mainAndroidProdPath)
   edit mainAndroidProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"]]
 
 copyFigwheelBridge = (projNameUs) ->
-  exec "cp #{resources}figwheel-bridge.js ."
+  fs.copySync("#{resources}figwheel-bridge.js", "./figwheel-bridge.js")
   edit "figwheel-bridge.js", [[projNameUsRx, projNameUs]]
 
 updateGitIgnore = () ->
@@ -275,21 +284,21 @@ init = (projName) ->
     if fs.existsSync projNameHyph
       throw new Error "Directory #{projNameHyph} already exists"
 
-    exec 'type lein'
+    ensureExecutableAvailable 'lein'
 
     log 'Creating Leiningen project'
     exec "lein new #{projNameHyph}"
 
     log 'Updating Leiningen project'
     process.chdir projNameHyph
-    exec "cp #{resources}project.clj project.clj"
+    fs.copySync("#{resources}project.clj", "project.clj")
     edit \
       'project.clj',
       [
         [projNameHyphRx, projNameHyph]
       ]
 
-    exec "rm -rf resources"
+    fs.removeSync "resources"
 
     corePath = "src/#{projNameUs}/core.clj"
     fs.unlinkSync corePath
@@ -297,16 +306,16 @@ init = (projName) ->
     handlersPath = "src/#{projNameUs}/handlers.cljs"
     subsPath = "src/#{projNameUs}/subs.cljs"
     dbPath = "src/#{projNameUs}/db.cljs"
-    exec "cp #{resources}cljs/handlers.cljs #{handlersPath}"
-    exec "cp #{resources}cljs/subs.cljs #{subsPath}"
-    exec "cp #{resources}cljs/db.cljs #{dbPath}"
+    fs.copySync("#{resources}cljs/handlers.cljs", handlersPath)
+    fs.copySync("#{resources}cljs/subs.cljs", subsPath)
+    fs.copySync("#{resources}cljs/db.cljs", dbPath)
 
     edit handlersPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
     edit subsPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
     edit dbPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
 
     fs.mkdirSync 'src/cljsjs'
-    exec "echo '(ns cljsjs.react)' > src/cljsjs/react.cljs"
+    fs.writeFileSync("src/cljsjs/react.cljs", "(ns cljsjs.react)")
 
     fs.mkdirSync "src/#{projNameUs}/android"
     fs.mkdirSync "src/#{projNameUs}/ios"
@@ -314,10 +323,10 @@ init = (projName) ->
     coreAndroidPath = "src/#{projNameUs}/android/core.cljs"
     coreIosPath = "src/#{projNameUs}/ios/core.cljs"
 
-    exec "cp #{resources}cljs/core.cljs #{coreAndroidPath}"
+    fs.copySync("#{resources}cljs/core.cljs", coreAndroidPath)
     edit coreAndroidPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"]]
 
-    exec "cp #{resources}cljs/core.cljs #{coreIosPath}"
+    fs.copySync("#{resources}cljs/core.cljs", coreIosPath)
     edit coreIosPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
 
     fs.mkdirSync "env"
@@ -325,7 +334,7 @@ init = (projName) ->
     copyDevEnvironmentFiles(projNameHyph, projName, "localhost")
     copyProdEnvironmentFiles(projNameHyph, projName)
 
-    exec "cp -r #{resources}images ."
+    fs.copySync("#{resources}images", "./images")
 
     log 'Creating React Native skeleton. Relax, this takes a while...'
 
