@@ -70,25 +70,12 @@ edit = (path, pairs) ->
     contents.replace rx, replacement
   , readFile path
 
-
-pluckUuid = (line) ->
-  line.match(/\[(.+)\]/)[1]
-
 mkdirSync = (path) ->
   try
     fs.mkdirSync(path)
   catch {message}
     if not message.match /EEXIST/i
       throw new Error "Could not create dir #{path}: #{message}" ;
-
-
-getUuidForDevice = (deviceName) ->
-  device = getDeviceList().find (line) -> line.match deviceName
-  unless device
-    logErr "Cannot find device `#{deviceName}`"
-
-  pluckUuid device
-
 
 toUnderscored = (s) ->
   s.replace(camelRx, '$1_$2').toLowerCase()
@@ -109,7 +96,6 @@ checkPort = (port, cb) ->
     sock.end()
     cb false
 
-
 ensureFreePort = (cb) ->
   checkPort rnPackagerPort, (inUse) ->
     if inUse
@@ -122,10 +108,6 @@ ensureFreePort = (cb) ->
 ensureXcode = (cb) ->
   try
     ensureExecutableAvailable 'xcodebuild'
-    config = readConfig()
-    unless config.device?
-      config.device = getUuidForDevice 'iPhone 6'
-      writeConfig config
     cb();
   catch {message}
     if message.match /type.+xcodebuild/i
@@ -175,30 +157,6 @@ readConfig = (verify = true)->
         '.re-natal contains malformed JSON'
       else
         message
-
-
-getBundleId = (name) ->
-  try
-    if line = readFile "ios/#{name}.xcodeproj/project.pbxproj"
-         .match /PRODUCT_BUNDLE_IDENTIFIER = (.+);/
-
-      line[1]
-
-    else if line = readFile "ios/#{name}/Info.plist"
-              .match /\<key\>CFBundleIdentifier\<\/key\>\n?\s*\<string\>(.+)\<\/string\>/
-
-      rfcIdRx = /\$\(PRODUCT_NAME\:rfc1034identifier\)/
-
-      if line[1].match rfcIdRx
-        line[1].replace rfcIdRx, name
-      else
-        line[1]
-
-    else
-      throw new Error 'Cannot find bundle identifier in project.pbxproj or Info.plist'
-
-  catch {message}
-    logErr message
 
 scanImageDir = (dir) ->
   fnames = fs.readdirSync(dir)
@@ -405,36 +363,6 @@ init = (projName) ->
       else
         message
 
-
-launch = ({name, device}) ->
-  unless device in getDeviceUuids()
-    log 'Device ID not available, defaulting to iPhone 6 simulator', 'yellow'
-    {device} = generateConfig name
-
-  try
-    fs.statSync 'node_modules'
-  catch
-    logErr 'Dependencies are missing. Something went horribly wrong...'
-
-  log 'Compiling ClojureScript'
-  exec 'lein prod-build'
-
-  log 'Compiling Xcode project'
-  try
-    exec "
-         xcodebuild
-         -project ios/#{name}.xcodeproj
-         -scheme #{name}
-         -destination platform='iOS Simulator',OS=latest,id='#{device}'
-         test
-         "
-
-    log 'Launching simulator'
-    exec "xcrun simctl launch #{device} #{getBundleId name}"
-
-  catch {message}
-    logErr message
-
 openXcode = (name) ->
   try
     exec "open ios/#{name}.xcodeproj"
@@ -449,21 +377,6 @@ openXcode = (name) ->
         "Invalid permissions for opening #{name}.xcodeproj in ios"
       else
         message
-
-
-getDeviceList = ->
-  try
-    exec 'xcrun instruments -s devices', true
-      .toString()
-      .split '\n'
-      .filter (line) -> /^i/.test line
-  catch {message}
-    logErr 'Device listing failed: ' + message
-
-
-getDeviceUuids = ->
-  getDeviceList().map (line) -> line.match(/\[(.+)\]/)[1]
-
 
 generateRequireModulesCode = (modules) ->
   jsCode = "var modules={'react-native': require('react-native')};"
@@ -572,39 +485,10 @@ cli.command 'init <name>'
 
     ensureFreePort -> init name
 
-
-cli.command 'launch'
-  .description 'compile project and run in iOS simulator'
-  .action ->
-    ensureOSX ->
-      ensureXcode ->
-        ensureFreePort -> launch readConfig()
-
 cli.command 'upgrade'
 .description 'upgrades project files to current installed version of re-natal (the upgrade of re-natal itself is done via npm)'
 .action ->
   doUpgrade readConfig(false)
-
-cli.command 'listdevices'
-  .description 'list available simulator devices by index'
-  .action ->
-    ensureOSX ->
-      ensureXcode ->
-        console.log (getDeviceList()
-          .map (line, i) -> "#{i}\t#{line.replace /\[.+\]/, ''}"
-          .join '\n')
-
-cli.command 'setdevice <index>'
-  .description 'choose simulator device by index'
-  .action (index) ->
-    ensureOSX ->
-      ensureXcode ->
-        unless device = getDeviceList()[parseInt index, 10]
-          logErr 'Invalid device index. Run re-natal listdevices for valid indexes.'
-
-        config = readConfig()
-        config.device = pluckUuid device
-        writeConfig config
 
 cli.command 'xcode'
   .description 'open Xcode project'
