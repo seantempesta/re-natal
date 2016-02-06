@@ -297,9 +297,9 @@ Packager so try to avoid doing so.
 
 - To change advanced settings run `re-natal xcode` to quickly open the Xcode project.
 
-- If you have customized project layout and `re-natal upgrade` does not fit your well,
+- If you have customized project layout and `re-natal upgrade` does not fit you well,
 then these commands might be useful for you:
-    * `re-natal copy-figwheel-brigde` - just copies figwheel-bridge.js from current re-natal
+    * `re-natal copy-figwheel-bridge` - just copies figwheel-bridge.js from current re-natal
 
 ## Dependencies
 As Re-Natal is the orchestration of many individual tools, there are quite a few dependencies.
