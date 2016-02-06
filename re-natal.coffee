@@ -633,6 +633,12 @@ cli.command 'use-component <name>'
   .action (name) ->
     useComponent(name)
 
+cli.command 'copy-figwheel-bridge'
+  .description 'copy figwheel-bridge.js into project'
+  .action () ->
+    copyFigwheelBridge(readConfig(false).name)
+    log "Copied figwheel-bridge.js"
+
 cli.on '*', (command) ->
   logErr "unknown command #{command[0]}. See re-natal --help for valid commands"
 
