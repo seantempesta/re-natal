@@ -290,17 +290,13 @@ the REPL a much nicer experience with arrow keys.
 Packager so try to avoid doing so.
 
 - You can launch your app on the simulator without opening Xcode by running
-`re-natal launch` in your app's root directory.
-
-- By default new Natal projects will launch on the iPhone 6 simulator. To change
-which device `re-natal launch` uses, you can run `re-natal listdevices` to see a list
-of available simulators, then select one by running `re-natal setdevice` with the
-index of the device on the list.
+`react-native run-ios` in your app's root directory (since RN 0.19.0).
 
 - To change advanced settings run `re-natal xcode` to quickly open the Xcode project.
 
-- The Xcode-free workflow is for convenience. If you're encountering app crashes,
-you should open the Xcode project and run it from there to view errors.
+- If you have customized project layout and `re-natal upgrade` does not fit your well,
+then these commands might be useful for you:
+    * `re-natal copy-figwheel-brigde` - just copies figwheel-bridge.js from current re-natal
 
 ## Dependencies
 As Re-Natal is the orchestration of many individual tools, there are quite a few dependencies.
