@@ -230,6 +230,7 @@ updateGitIgnore = () ->
   fs.appendFileSync(".gitignore", "\n# Figwheel\n#\nfigwheel_server.log")
 
 patchReactNativePackager = () ->
+  ckDeps.sync {install: true, verbose: false}
   log "Patching react-native packager to serve *.map files"
   edit "node_modules/react-native/packager/react-packager/src/Server/index.js",
     [[/match.*\.map\$\/\)/m, "match(/index\\..*\\.map$/)"]]
@@ -428,10 +429,6 @@ doUpgrade = (config) ->
   projNameHyph = projName.replace(camelRx, '$1-$2').toLowerCase()
   projNameUs   = toUnderscored projName
 
-  ckDeps.sync {install: true, verbose: false}
-
-  patchReactNativePackager()
-
   copyDevEnvironmentFiles(projNameHyph, projName, "localhost")
   copyProdEnvironmentFiles(projNameHyph, projName)
   log 'upgraded files in env/'
@@ -516,6 +513,11 @@ cli.command 'use-component <name>'
   .description 'configures a custom component to work with figwheel. name is the value you pass to (js/require) function.'
   .action (name) ->
     useComponent(name)
+
+cli.command 'enable-source-maps'
+.description 'patches RN packager to server *.map files from filesystem, so that chrome can download them.'
+.action () ->
+  patchReactNativePackager()
 
 cli.command 'copy-figwheel-bridge'
   .description 'copy figwheel-bridge.js into project'
