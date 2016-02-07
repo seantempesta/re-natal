@@ -5,10 +5,10 @@
 # MIT License
 
 fs      = require 'fs-extra'
+fpath   = require 'path'
 net     = require 'net'
 http    = require 'http'
 os      = require 'os'
-crypto  = require 'crypto'
 child   = require 'child_process'
 cli     = require 'commander'
 chalk   = require 'chalk'
@@ -17,19 +17,31 @@ ckDeps  = require 'check-dependencies'
 pkgJson = require __dirname + '/package.json'
 
 nodeVersion     = pkgJson.engines.node
-resources       = __dirname + '/resources/'
+resources       = __dirname + '/resources'
 validNameRx     = /^[A-Z][0-9A-Z]*$/i
 camelRx         = /([a-z])([A-Z])/g
 projNameRx      = /\$PROJECT_NAME\$/g
 projNameHyphRx  = /\$PROJECT_NAME_HYPHENATED\$/g
 projNameUsRx    = /\$PROJECT_NAME_UNDERSCORED\$/g
+interfaceDepsRx = /\$INTERFACE_DEPS\$/g
 platformRx      = /\$PLATFORM\$/g
 devHostRx       = /\$DEV_HOST\$/g
 figwheelUrlRx   = /ws:\/\/[0-9a-zA-Z\.]*:/g
 rnVersion       = '0.19.0'
 rnPackagerPort  = 8081
 process.title   = 're-natal'
-sampleCommand  = '(dispatch [:set-greeting "Hello Native World!"])'
+interfaceConf   =
+  'reagent':
+    cljsDir: "cljs-reagent"
+    sources:
+      ios:     ["core.cljs"]
+      android: ["core.cljs"]
+      common:  ["handlers.cljs", "subs.cljs", "db.cljs"]
+    deps:      ['[reagent "0.5.1" :exclusions [cljsjs/react]]'
+                '[re-frame "0.6.0"]'
+                '[prismatic/schema "1.0.4"]']
+    shims:     ["cljsjs.react"]
+    sampleCommand: '(dispatch [:set-greeting "Hello Native World!"])'
 
 log = (s, color = 'green') ->
   console.log chalk[color] s
@@ -70,13 +82,6 @@ edit = (path, pairs) ->
     contents.replace rx, replacement
   , readFile path
 
-mkdirSync = (path) ->
-  try
-    fs.mkdirSync(path)
-  catch {message}
-    if not message.match /EEXIST/i
-      throw new Error "Could not create dir #{path}: #{message}" ;
-
 toUnderscored = (s) ->
   s.replace(camelRx, '$1_$2').toLowerCase()
 
@@ -113,10 +118,11 @@ ensureXcode = (cb) ->
     if message.match /type.+xcodebuild/i
       logErr 'Xcode Command Line Tools are required'
 
-generateConfig = (name) ->
+generateConfig = (interfaceName, projName) ->
   log 'Creating Re-Natal config'
   config =
-    name:   name
+    name:   projName
+    interface: interfaceName
     androidHost: "localhost"
     modules: []
     imageDirs: ["images"]
@@ -190,39 +196,37 @@ configureDevHostForAndroidDevice = (deviceType) ->
   catch {message}
     logErr message
 
-copyDevEnvironmentFiles = (projNameHyph, projName, devHost) ->
-  mkdirSync "env/dev"
-  mkdirSync "env/dev/env"
-  mkdirSync "env/dev/env/ios"
-  mkdirSync "env/dev/env/android"
+copyDevEnvironmentFiles = (interfaceName, projNameHyph, projName, devHost) ->
+  fs.mkdirpSync "env/dev/env/ios"
+  fs.mkdirpSync "env/dev/env/android"
 
   userNsPath = "env/dev/user.clj"
-  fs.copySync("#{resources}user.clj", userNsPath)
+  fs.copySync("#{resources}/user.clj", userNsPath)
 
   mainIosDevPath = "env/dev/env/ios/main.cljs"
   mainAndroidDevPath = "env/dev/env/android/main.cljs"
 
-  fs.copySync("#{resources}cljs/main_dev.cljs", mainIosDevPath)
+  cljsDir = interfaceConf[interfaceName].cljsDir
+  fs.copySync("#{resources}/#{cljsDir}/main_dev.cljs", mainIosDevPath)
   edit mainIosDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"], [devHostRx, devHost] ]
-  fs.copySync("#{resources}cljs/main_dev.cljs", mainAndroidDevPath)
+  fs.copySync("#{resources}/#{cljsDir}/main_dev.cljs", mainAndroidDevPath)
   edit mainAndroidDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"], [devHostRx, devHost]]
 
-copyProdEnvironmentFiles = (projNameHyph, projName) ->
-  mkdirSync "env/prod"
-  mkdirSync "env/prod/env"
-  mkdirSync "env/prod/env/ios"
-  mkdirSync "env/prod/env/android"
+copyProdEnvironmentFiles = (interfaceName, projNameHyph, projName) ->
+  fs.mkdirpSync "env/prod/env/ios"
+  fs.mkdirpSync "env/prod/env/android"
 
   mainIosProdPath = "env/prod/env/ios/main.cljs"
   mainAndroidProdPath = "env/prod/env/android/main.cljs"
 
-  fs.copySync("#{resources}cljs/main_prod.cljs", mainIosProdPath)
+  cljsDir = interfaceConf[interfaceName].cljsDir
+  fs.copySync("#{resources}/#{cljsDir}/main_prod.cljs", mainIosProdPath)
   edit mainIosProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
-  fs.copySync("#{resources}cljs/main_prod.cljs", mainAndroidProdPath)
+  fs.copySync("#{resources}/#{cljsDir}/main_prod.cljs", mainAndroidProdPath)
   edit mainAndroidProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"]]
 
 copyFigwheelBridge = (projNameUs) ->
-  fs.copySync("#{resources}figwheel-bridge.js", "./figwheel-bridge.js")
+  fs.copySync("#{resources}/figwheel-bridge.js", "./figwheel-bridge.js")
   edit "figwheel-bridge.js", [[projNameUsRx, projNameUs]]
 
 updateGitIgnore = () ->
@@ -235,7 +239,38 @@ patchReactNativePackager = () ->
   edit "node_modules/react-native/packager/react-packager/src/Server/index.js",
     [[/match.*\.map\$\/\)/m, "match(/index\\..*\\.map$/)"]]
 
-init = (projName) ->
+shimCljsNamespace = (ns) ->
+  filePath = "src/" + ns.replace(/\./g, "/") + ".cljs"
+  fs.mkdirpSync fpath.dirname(filePath)
+  fs.writeFileSync(filePath, "(ns #{ns})")
+
+copySrcFiles = (interfaceName, projName, projNameUs, projNameHyph) ->
+  cljsDir = interfaceConf[interfaceName].cljsDir
+  fileNames = interfaceConf[interfaceName].sources.common;
+  for fileName in fileNames
+    path = "src/#{projNameUs}/#{fileName}"
+    fs.copySync("#{resources}/#{cljsDir}/#{fileName}", path)
+    edit path, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
+
+  platforms = ["ios", "android"]
+  for platform in platforms
+    fs.mkdirSync "src/#{projNameUs}/#{platform}"
+    fileNames = interfaceConf[interfaceName].sources[platform]
+    for fileName in fileNames
+      path = "src/#{projNameUs}/#{platform}/#{fileName}"
+      fs.copySync("#{resources}/#{cljsDir}/#{fileName}", path)
+      edit path, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, platform]]
+
+  shims = fileNames = interfaceConf[interfaceName].shims;
+  for namespace in shims
+    shimCljsNamespace(namespace)
+
+copyProjectClj = (interfaceName, projNameHyph) ->
+  fs.copySync("#{resources}/project.clj", "project.clj")
+  deps = interfaceConf[interfaceName].deps.join("\n")
+  edit 'project.clj', [[projNameHyphRx, projNameHyph], [interfaceDepsRx, deps]]
+
+init = (interfaceName, projName) ->
   if projName.toLowerCase() is 'react' or !projName.match validNameRx
     logErr 'Invalid project name. Use an alphanumeric CamelCase name.'
 
@@ -256,50 +291,20 @@ init = (projName) ->
 
     log 'Updating Leiningen project'
     process.chdir projNameHyph
-    fs.copySync("#{resources}project.clj", "project.clj")
-    edit \
-      'project.clj',
-      [
-        [projNameHyphRx, projNameHyph]
-      ]
-
     fs.removeSync "resources"
-
     corePath = "src/#{projNameUs}/core.clj"
     fs.unlinkSync corePath
 
-    handlersPath = "src/#{projNameUs}/handlers.cljs"
-    subsPath = "src/#{projNameUs}/subs.cljs"
-    dbPath = "src/#{projNameUs}/db.cljs"
-    fs.copySync("#{resources}cljs/handlers.cljs", handlersPath)
-    fs.copySync("#{resources}cljs/subs.cljs", subsPath)
-    fs.copySync("#{resources}cljs/db.cljs", dbPath)
+    copyProjectClj(interfaceName, projNameHyph)
 
-    edit handlersPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
-    edit subsPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
-    edit dbPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
-
-    fs.mkdirSync 'src/cljsjs'
-    fs.writeFileSync("src/cljsjs/react.cljs", "(ns cljsjs.react)")
-
-    fs.mkdirSync "src/#{projNameUs}/android"
-    fs.mkdirSync "src/#{projNameUs}/ios"
-
-    coreAndroidPath = "src/#{projNameUs}/android/core.cljs"
-    coreIosPath = "src/#{projNameUs}/ios/core.cljs"
-
-    fs.copySync("#{resources}cljs/core.cljs", coreAndroidPath)
-    edit coreAndroidPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"]]
-
-    fs.copySync("#{resources}cljs/core.cljs", coreIosPath)
-    edit coreIosPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
+    copySrcFiles(interfaceName, projName, projNameUs, projNameHyph)
 
     fs.mkdirSync "env"
 
-    copyDevEnvironmentFiles(projNameHyph, projName, "localhost")
-    copyProdEnvironmentFiles(projNameHyph, projName)
+    copyDevEnvironmentFiles(interfaceName, projNameHyph, projName, "localhost")
+    copyProdEnvironmentFiles(interfaceName, projNameHyph, projName)
 
-    fs.copySync("#{resources}images", "./images")
+    fs.copySync("#{resources}/images", "./images")
 
     log 'Creating React Native skeleton. Relax, this takes a while...'
 
@@ -320,11 +325,9 @@ init = (projName) ->
            \"require('react-native/local-cli/cli').init('.', '#{projName}')\"
            "
 
-    patchReactNativePackager();
-
     updateGitIgnore()
 
-    generateConfig projName
+    generateConfig(interfaceName, projName)
 
     copyFigwheelBridge(projNameUs)
 
@@ -350,7 +353,7 @@ init = (projName) ->
     log 'Changes you make via the REPL or by changing your .cljs files should appear live.', 'yellow'
     log ''
     log 'Try this command as an example:', 'yellow'
-    log sampleCommand, 'inverse'
+    log interfaceConf[interfaceName].sampleCommand, 'inverse'
     log ''
     log '✔ Done', 'bgMagenta'
     log ''
@@ -425,12 +428,13 @@ generateDevScripts = () ->
         message
 
 doUpgrade = (config) ->
+  interfaceName = config.interface;
   projName = config.name;
   projNameHyph = projName.replace(camelRx, '$1-$2').toLowerCase()
   projNameUs   = toUnderscored projName
 
-  copyDevEnvironmentFiles(projNameHyph, projName, "localhost")
-  copyProdEnvironmentFiles(projNameHyph, projName)
+  copyDevEnvironmentFiles(interfaceName, projNameHyph, projName, "localhost")
+  copyProdEnvironmentFiles(interfaceName, projNameHyph, projName)
   log 'upgraded files in env/'
 
   copyFigwheelBridge(projNameUs)
@@ -480,7 +484,7 @@ cli.command 'init <name>'
              re-natal init HelloWorld
              '''
 
-    ensureFreePort -> init name
+    ensureFreePort -> init('reagent', name)
 
 cli.command 'upgrade'
 .description 'upgrades project files to current installed version of re-natal (the upgrade of re-natal itself is done via npm)'
