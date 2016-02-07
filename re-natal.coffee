@@ -42,6 +42,17 @@ interfaceConf   =
                 '[prismatic/schema "1.0.4"]']
     shims:     ["cljsjs.react"]
     sampleCommand: '(dispatch [:set-greeting "Hello Native World!"])'
+  'om-next':
+    cljsDir: "cljs-om-next"
+    sources:
+      ios:     ["core.cljs"]
+      android: ["core.cljs"]
+      common:  []
+    deps:      ['[org.omcljs/om "1.0.0-alpha28" :exclusions [cljsjs/react cljsjs/react-dom]]'
+                '[natal-shell "0.1.6"]']
+    shims:     ["cljsjs.react", "cljsjs.react.dom"]
+    sampleCommand: '(swap! app-state assoc :app/msg "Hello Native World")'
+interfaceNames  = Object.keys interfaceConf
 
 log = (s, color = 'green') ->
   console.log chalk[color] s
@@ -476,7 +487,8 @@ cli.version pkgJson.version
 
 cli.command 'init <name>'
   .description 'create a new ClojureScript React Native project'
-  .action (name) ->
+  .option "-i, --interface [#{interfaceNames.join ' '}]", 'specify React interface', 'reagent'
+  .action (name, cmd) ->
     if typeof name isnt 'string'
       logErr '''
              re-natal init requires a project name as the first argument.
@@ -484,7 +496,7 @@ cli.command 'init <name>'
              re-natal init HelloWorld
              '''
 
-    ensureFreePort -> init('reagent', name)
+    ensureFreePort -> init(cmd.interface, name)
 
 cli.command 'upgrade'
 .description 'upgrades project files to current installed version of re-natal (the upgrade of re-natal itself is done via npm)'
