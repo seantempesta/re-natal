@@ -2,14 +2,13 @@
   (:require-macros [natal-shell.components :refer [view text image touchable-highlight]]
                    [natal-shell.alert :refer [alert]])
   (:require [om.next :as om :refer-macros [defui]]
-            [re-natal.support :as sup]))
+            [re-natal.support :as sup]
+            [$PROJECT_NAME_HYPHENATED$.state :as state]))
 
 (set! js/React (js/require "react-native"))
 
 (def app-registry (.-AppRegistry js/React))
 (def logo-img (js/require "./images/cljs.png"))
-
-(defonce app-state (atom {:app/msg "Hello Clojure in iOS and Android!"}))
 
 (defui AppRoot
        static om/IQuery
@@ -27,26 +26,9 @@
                                                 :onPress #(alert "HELLO!")}
                                                (text {:style {:color "white" :textAlign "center" :fontWeight "bold"}} "press me"))))))
 
-
-(defmulti read om/dispatch)
-(defmethod read :default
-           [{:keys [state]} k _]
-           (let [st @state]
-                (if-let [[_ v] (find st k)]
-                        {:value v}
-                        {:value :not-found})))
-
-(defonce reconciler
-         (om/reconciler
-           {:state        app-state
-            :parser       (om/parser {:read read})
-            :root-render  sup/root-render
-            :root-unmount sup/root-unmount}))
-
-
 (defonce RootNode (sup/root-node 1))
 (defonce app-root (om/factory RootNode))
 
 (defn init []
-      (om/add-root! reconciler AppRoot 1)
+      (om/add-root! state/reconciler AppRoot 1)
       (.registerComponent app-registry "$PROJECT_NAME$" (fn [] app-root)))

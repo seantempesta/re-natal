@@ -48,7 +48,7 @@ interfaceConf   =
     sources:
       ios:     ["core.cljs"]
       android: ["core.cljs"]
-      common:  []
+      common:  ["state.cljs"]
       other:   [["support.cljs","re_natal/support.cljs"]]
     deps:      ['[org.omcljs/om "1.0.0-alpha28" :exclusions [cljsjs/react cljsjs/react-dom]]'
                 '[natal-shell "0.1.6"]']
