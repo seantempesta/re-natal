@@ -37,6 +37,7 @@ interfaceConf   =
       ios:     ["core.cljs"]
       android: ["core.cljs"]
       common:  ["handlers.cljs", "subs.cljs", "db.cljs"]
+      other:   []
     deps:      ['[reagent "0.5.1" :exclusions [cljsjs/react]]'
                 '[re-frame "0.6.0"]'
                 '[prismatic/schema "1.0.4"]']
@@ -48,10 +49,11 @@ interfaceConf   =
       ios:     ["core.cljs"]
       android: ["core.cljs"]
       common:  []
+      other:   [["support.cljs","re_natal/support.cljs"]]
     deps:      ['[org.omcljs/om "1.0.0-alpha28" :exclusions [cljsjs/react cljsjs/react-dom]]'
                 '[natal-shell "0.1.6"]']
     shims:     ["cljsjs.react", "cljsjs.react.dom"]
-    sampleCommand: '(swap! app-state assoc :app/msg "Hello Native World")'
+    sampleCommand: '(swap! app-state assoc :app/msg "Hello Native World!")'
 interfaceNames  = Object.keys interfaceConf
 
 log = (s, color = 'green') ->
@@ -257,6 +259,7 @@ shimCljsNamespace = (ns) ->
 
 copySrcFiles = (interfaceName, projName, projNameUs, projNameHyph) ->
   cljsDir = interfaceConf[interfaceName].cljsDir
+
   fileNames = interfaceConf[interfaceName].sources.common;
   for fileName in fileNames
     path = "src/#{projNameUs}/#{fileName}"
@@ -271,6 +274,12 @@ copySrcFiles = (interfaceName, projName, projNameUs, projNameHyph) ->
       path = "src/#{projNameUs}/#{platform}/#{fileName}"
       fs.copySync("#{resources}/#{cljsDir}/#{fileName}", path)
       edit path, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, platform]]
+
+  otherFiles = interfaceConf[interfaceName].sources.other;
+  for cpFile in otherFiles
+    from = "#{resources}/#{cljsDir}/#{cpFile[0]}"
+    to = "src/#{cpFile[1]}"
+    fs.copySync(from, to)
 
   shims = fileNames = interfaceConf[interfaceName].shims;
   for namespace in shims
