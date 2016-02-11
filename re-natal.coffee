@@ -504,7 +504,8 @@ cli.command 'init <name>'
              e.g.
              re-natal init HelloWorld
              '''
-
+    unless interfaceConf[cmd.interface]
+      logErr "Unsupported React interface: #{cmd.interface}, one of [#{interfaceNames}] was expected."
     ensureFreePort -> init(cmd.interface, name)
 
 cli.command 'upgrade'
