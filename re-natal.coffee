@@ -56,7 +56,8 @@ interfaceConf   =
     shims:     ["cljsjs.react", "cljsjs.react.dom"]
     sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.state)'
     sampleCommand: '(swap! app-state assoc :app/msg "Hello Native World!")'
-interfaceNames  = Object.keys interfaceConf
+interfaceNames   = Object.keys interfaceConf
+defaultInterface = 'reagent'
 
 log = (s, color = 'green') ->
   console.log chalk[color] s
@@ -157,7 +158,7 @@ writeConfig = (config) ->
         message
 
 verifyConfig = (config) ->
-  if !config.androidHost? || !config.modules? || !config.imageDirs?
+  if !config.androidHost? || !config.modules? || !config.imageDirs? || !config.interface?
     throw new Error 're-natal project needs to be upgraded, please run: re-natal upgrade'
   config
 
@@ -450,10 +451,26 @@ generateDevScripts = () ->
         message
 
 doUpgrade = (config) ->
-  interfaceName = config.interface;
   projName = config.name;
   projNameHyph = projName.replace(camelRx, '$1-$2').toLowerCase()
   projNameUs   = toUnderscored projName
+
+  unless config.interface
+    config.interface = defaultInterface
+
+  unless config.modules
+    config.modules = []
+
+  unless config.imageDirs
+    config.imageDirs = ["images"]
+
+  unless config.androidHost
+    config.androidHost = "localhost"
+
+  writeConfig(config)
+  log 'upgraded .re-natal'
+
+  interfaceName = config.interface;
 
   copyDevEnvironmentFiles(interfaceName, projNameHyph, projName, "localhost")
   copyProdEnvironmentFiles(interfaceName, projNameHyph, projName)
@@ -461,18 +478,6 @@ doUpgrade = (config) ->
 
   copyFigwheelBridge(projNameUs)
   log 'upgraded figwheel-bridge.js'
-
-  if (!config.modules)
-    config.modules = []
-
-  if (!config.imageDirs)
-    config.imageDirs = ["images"]
-
-  if (!config.androidHost)
-    config.androidHost = "localhost"
-
-  writeConfig(config)
-  log 'upgraded .re-natal'
 
   edit "src/#{projNameUs}/ios/core.cljs", [[/\^:figwheel-load\s/g, ""]]
   edit "src/#{projNameUs}/android/core.cljs", [[/\^:figwheel-load\s/g, ""]]
@@ -498,7 +503,7 @@ cli.version pkgJson.version
 
 cli.command 'init <name>'
   .description 'create a new ClojureScript React Native project'
-  .option "-i, --interface [#{interfaceNames.join ' '}]", 'specify React interface', 'reagent'
+  .option "-i, --interface [#{interfaceNames.join ' '}]", 'specify React interface', defaultInterface
   .action (name, cmd) ->
     if typeof name isnt 'string'
       logErr '''
