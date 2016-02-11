@@ -16,7 +16,6 @@
               '[:app/msg])
        Object
        (render [this]
-               (.log js/console "rendering app")
                (let [{:keys [app/msg]} (om/props this)]
                     (view {:style {:flexDirection "column" :margin 40 :alignItems "center"}}
                           (text {:style {:fontSize 30 :fontWeight "100" :marginBottom 20 :textAlign "center"}} msg)
@@ -26,7 +25,7 @@
                                                 :onPress #(alert "HELLO!")}
                                                (text {:style {:color "white" :textAlign "center" :fontWeight "bold"}} "press me"))))))
 
-(defonce RootNode (sup/root-node 1))
+(defonce RootNode (sup/root-node! 1))
 (defonce app-root (om/factory RootNode))
 
 (defn init []
