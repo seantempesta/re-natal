@@ -37,11 +37,26 @@ interfaceConf   =
       ios:     ["core.cljs"]
       android: ["core.cljs"]
       common:  ["handlers.cljs", "subs.cljs", "db.cljs"]
+      other:   []
     deps:      ['[reagent "0.5.1" :exclusions [cljsjs/react]]'
                 '[re-frame "0.6.0"]'
                 '[prismatic/schema "1.0.4"]']
     shims:     ["cljsjs.react"]
+    sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.ios.core)'
     sampleCommand: '(dispatch [:set-greeting "Hello Native World!"])'
+  'om-next':
+    cljsDir: "cljs-om-next"
+    sources:
+      ios:     ["core.cljs"]
+      android: ["core.cljs"]
+      common:  ["state.cljs"]
+      other:   [["support.cljs","re_natal/support.cljs"]]
+    deps:      ['[org.omcljs/om "1.0.0-alpha28" :exclusions [cljsjs/react cljsjs/react-dom]]'
+                '[natal-shell "0.1.6"]']
+    shims:     ["cljsjs.react", "cljsjs.react.dom"]
+    sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.state)'
+    sampleCommand: '(swap! app-state assoc :app/msg "Hello Native World!")'
+interfaceNames  = Object.keys interfaceConf
 
 log = (s, color = 'green') ->
   console.log chalk[color] s
@@ -246,6 +261,7 @@ shimCljsNamespace = (ns) ->
 
 copySrcFiles = (interfaceName, projName, projNameUs, projNameHyph) ->
   cljsDir = interfaceConf[interfaceName].cljsDir
+
   fileNames = interfaceConf[interfaceName].sources.common;
   for fileName in fileNames
     path = "src/#{projNameUs}/#{fileName}"
@@ -260,6 +276,12 @@ copySrcFiles = (interfaceName, projName, projNameUs, projNameHyph) ->
       path = "src/#{projNameUs}/#{platform}/#{fileName}"
       fs.copySync("#{resources}/#{cljsDir}/#{fileName}", path)
       edit path, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, platform]]
+
+  otherFiles = interfaceConf[interfaceName].sources.other;
+  for cpFile in otherFiles
+    from = "#{resources}/#{cljsDir}/#{cpFile[0]}"
+    to = "src/#{cpFile[1]}"
+    fs.copySync(from, to)
 
   shims = fileNames = interfaceConf[interfaceName].shims;
   for namespace in shims
@@ -348,7 +370,7 @@ init = (interfaceName, projName) ->
     log 'Reload the app in simulator'
     log ''
     log 'At the REPL prompt type this:', 'yellow'
-    log "(in-ns '#{projNameHyph}.ios.core)", 'inverse'
+    log interfaceConf[interfaceName].sampleCommandNs.replace(projNameHyphRx, projNameHyph), 'inverse'
     log ''
     log 'Changes you make via the REPL or by changing your .cljs files should appear live.', 'yellow'
     log ''
@@ -476,15 +498,17 @@ cli.version pkgJson.version
 
 cli.command 'init <name>'
   .description 'create a new ClojureScript React Native project'
-  .action (name) ->
+  .option "-i, --interface [#{interfaceNames.join ' '}]", 'specify React interface', 'reagent'
+  .action (name, cmd) ->
     if typeof name isnt 'string'
       logErr '''
              re-natal init requires a project name as the first argument.
              e.g.
              re-natal init HelloWorld
              '''
-
-    ensureFreePort -> init('reagent', name)
+    unless interfaceConf[cmd.interface]
+      logErr "Unsupported React interface: #{cmd.interface}, one of [#{interfaceNames}] was expected."
+    ensureFreePort -> init(cmd.interface, name)
 
 cli.command 'upgrade'
 .description 'upgrades project files to current installed version of re-natal (the upgrade of re-natal itself is done via npm)'

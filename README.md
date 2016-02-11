@@ -7,7 +7,8 @@ Artur Girenko, MIT License
 
 This project is a fork of [dmotz/natal](https://github.com/dmotz/natal) by Dan Motzenbecker with
 the goal of generating skeleton of native app for iOS and Android based on
-[Reagent](https://github.com/reagent-project/reagent) and [re-frame](https://github.com/Day8/re-frame).
+[Reagent](https://github.com/reagent-project/reagent) and [re-frame](https://github.com/Day8/re-frame)
+or [Om.Next](https://github.com/omcljs/om/wiki/Quick-Start-(om.next)).
 
 The support of Figwheel is based on brilliant solution developed by Will Decker [decker405/figwheel-react-native](https://github.com/decker405/figwheel-react-native)
 which works in both platforms.
@@ -54,12 +55,15 @@ To bootstrap a new app, run `re-natal init` with your app's name as an argument:
 ```
 $ re-natal init FutureApp
 ```
+Or, for Om.Next project:
+
+```
+$ re-natal init FutureApp -i om-next
+```
 
 If your app's name is more than a single word, be sure to type it in CamelCase.
 A corresponding hyphenated Clojure namespace will be created.
 
-Re-Natal will create a simple skeleton based on the current
-version of [Reagent](https://github.com/reagent-project/reagent) and [Day8/re-frame](https://github.com/Day8/re-frame).
 If all goes well you should see printed out basic instructions how to run in iOS simulator.
 
 ```
