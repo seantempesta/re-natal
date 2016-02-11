@@ -42,6 +42,7 @@ interfaceConf   =
                 '[re-frame "0.6.0"]'
                 '[prismatic/schema "1.0.4"]']
     shims:     ["cljsjs.react"]
+    sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.ios.core)'
     sampleCommand: '(dispatch [:set-greeting "Hello Native World!"])'
   'om-next':
     cljsDir: "cljs-om-next"
@@ -53,6 +54,7 @@ interfaceConf   =
     deps:      ['[org.omcljs/om "1.0.0-alpha28" :exclusions [cljsjs/react cljsjs/react-dom]]'
                 '[natal-shell "0.1.6"]']
     shims:     ["cljsjs.react", "cljsjs.react.dom"]
+    sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.state)'
     sampleCommand: '(swap! app-state assoc :app/msg "Hello Native World!")'
 interfaceNames  = Object.keys interfaceConf
 
@@ -368,7 +370,7 @@ init = (interfaceName, projName) ->
     log 'Reload the app in simulator'
     log ''
     log 'At the REPL prompt type this:', 'yellow'
-    log "(in-ns '#{projNameHyph}.ios.core)", 'inverse'
+    log interfaceConf[interfaceName].sampleCommandNs.replace(projNameHyphRx, projNameHyph), 'inverse'
     log ''
     log 'Changes you make via the REPL or by changing your .cljs files should appear live.', 'yellow'
     log ''
