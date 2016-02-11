@@ -64,8 +64,6 @@ $ re-natal init FutureApp -i om-next
 If your app's name is more than a single word, be sure to type it in CamelCase.
 A corresponding hyphenated Clojure namespace will be created.
 
-Re-Natal will create a simple skeleton based on the current
-version of [Reagent](https://github.com/reagent-project/reagent) and [Day8/re-frame](https://github.com/Day8/re-frame).
 If all goes well you should see printed out basic instructions how to run in iOS simulator.
 
 ```
