@@ -288,6 +288,7 @@ You can undo this any time by deleting `node_modules` and running `re-natal deps
 
 ## Example Apps
 * [Luno](https://github.com/alwx/luno-react-native) is a demo mobile application written in ClojureScript.
+* [Showcase of iOS navigation](https://github.com/seantempesta/om-next-react-native-router-flux) with react-native-router-flux and Om.Next
 
 ## Tips
 - Having `rlwrap` installed is optional but highly recommended since it makes
