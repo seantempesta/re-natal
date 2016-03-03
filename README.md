@@ -87,7 +87,7 @@ Luckily, this can be improved by compiling with `optimizations :none` and using
 Figwheel.
 
 #### Using Figwheel in iOS simulator
-Start your app from Xcode, or just run `react-native run-ios`
+Start your app from Xcode and pick a simulator target, or just run `react-native run-ios`
 
 Then, to start development mode execute commands:
 ```
@@ -95,6 +95,13 @@ $ re-natal use-figwheel
 $ lein figwheel ios
 ```
 This will generate index.ios.js and index.android.js which works with compiler mode`optimizations :none`.
+
+#### Using Figwheel in real iOS device
+
+Switch to using your iOS device: `re-natal use-ios-device real`.
+If this doesn't correctly detect your computer's IP you can pass your IP address explicitly: `re-natal use-ios-device IP`
+
+Then follow the remaining directions above for the iOS simulator except pick your connected device in Xcode
 
 #### Using Figwheel in real Android device
 To run figwheel with real Android device please read [Running on Device](https://facebook.github.io/react-native/docs/running-on-device-android.html#content).
@@ -137,7 +144,7 @@ Start your simulator and deploy your app:
 ```
 $ react-native run-android
 ```
-#### Swiching between Android devices
+#### Switching between Android devices
 Run `use-android-device` to configure device type you want to use in development:
 ```
 $ re-natal use-android-device <real|genymotion|avd>
