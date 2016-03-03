@@ -27,6 +27,7 @@ interfaceDepsRx = /\$INTERFACE_DEPS\$/g
 platformRx      = /\$PLATFORM\$/g
 devHostRx       = /\$DEV_HOST\$/g
 figwheelUrlRx   = /ws:\/\/[0-9a-zA-Z\.]*:/g
+appDelegateRx   = /http:\/\/[^:]+/g
 rnVersion       = '0.20.0'
 rnPackagerPort  = 8081
 process.title   = 're-natal'
@@ -140,6 +141,7 @@ generateConfig = (interfaceName, projName) ->
     name:   projName
     interface: interfaceName
     androidHost: "localhost"
+    iosHost: "localhost"
     modules: []
     imageDirs: ["images"]
 
@@ -158,7 +160,7 @@ writeConfig = (config) ->
         message
 
 verifyConfig = (config) ->
-  if !config.androidHost? || !config.modules? || !config.imageDirs? || !config.interface?
+  if !config.androidHost? || !config.modules? || !config.imageDirs? || !config.interface? || !config.iosHost?
     throw new Error 're-natal project needs to be upgraded, please run: re-natal upgrade'
   config
 
@@ -208,6 +210,21 @@ configureDevHostForAndroidDevice = (deviceType) ->
     log "Using host '#{devHost}' for android device type '#{deviceType}'"
     config = readConfig()
     config.androidHost = devHost
+    writeConfig(config)
+  catch {message}
+    logErr message
+
+configureDevHostForIosDevice = (deviceType) ->
+  try
+    devHost = if deviceType == 'simulator'
+                'localhost'
+              else if deviceType == 'real'
+                exec('ipconfig getifaddr en0', true).toString().trim()
+              else
+                deviceType
+
+    config = readConfig()
+    config.iosHost = devHost
     writeConfig(config)
   catch {message}
     logErr message
@@ -411,10 +428,16 @@ generateRequireModulesCode = (modules) ->
     jsCode += "modules['#{m}']=require('#{m}');";
   jsCode += '\n'
 
-updateFigwheelUrlForAndroid= (devHost) ->
+updateFigwheelUrls = (androidHost, iosHost) ->
   mainAndroidDevPath = "env/dev/env/android/main.cljs"
+  edit mainAndroidDevPath, [[figwheelUrlRx, "ws://#{androidHost}:"]]
 
-  edit mainAndroidDevPath, [[figwheelUrlRx, "ws://#{devHost}:"]]
+  mainIosDevPath = "env/dev/env/ios/main.cljs"
+  edit mainIosDevPath, [[figwheelUrlRx, "ws://#{iosHost}:"]]
+
+updateIosAppDelegate = (projName, iosHost) ->
+  appDelegatePath = "ios/#{projName}/AppDelegate.m"
+  edit appDelegatePath, [[appDelegateRx, "http://#{iosHost}"]]
 
 generateDevScripts = () ->
   try
@@ -433,14 +456,18 @@ generateDevScripts = () ->
     moduleMap = generateRequireModulesCode modulesAndImages
 
     androidDevHost = config.androidHost
+    iosDevHost = config.iosHost
 
-    fs.writeFileSync 'index.ios.js', "#{moduleMap}require('figwheel-bridge').withModules(modules).start('#{projName}','ios','localhost');"
+    fs.writeFileSync 'index.ios.js', "#{moduleMap}require('figwheel-bridge').withModules(modules).start('#{projName}','ios','#{iosDevHost}');"
     log 'index.ios.js was regenerated'
     fs.writeFileSync 'index.android.js', "#{moduleMap}require('figwheel-bridge').withModules(modules).start('#{projName}','android','#{androidDevHost}');"
     log 'index.android.js was regenerated'
 
-    updateFigwheelUrlForAndroid(androidDevHost)
-    log 'Dev server host for iOS: localhost'
+    updateIosAppDelegate(projName, iosDevHost)
+    log "AppDelegate.m was updated"
+
+    updateFigwheelUrls(androidDevHost, iosDevHost)
+    log 'Dev server host for iOS: ' + iosDevHost
     log 'Dev server host for Android: ' + androidDevHost
 
   catch {message}
@@ -466,6 +493,9 @@ doUpgrade = (config) ->
 
   unless config.androidHost
     config.androidHost = "localhost"
+
+  unless config.iosHost
+    config.iosHost = "localhost"
 
   writeConfig(config)
   log 'upgraded .re-natal'
@@ -541,6 +571,11 @@ cli.command 'use-android-device <type>'
   .description 'sets up the host for android device type: \'real\' - localhost, \'avd\' - 10.0.2.2, \'genymotion\' - 10.0.3.2'
   .action (type) ->
     configureDevHostForAndroidDevice type
+
+cli.command 'use-ios-device <type>'
+  .description 'sets up the host for ios device type: \'simulator\' - localhost, \'device\' - auto detect IP on eth0, IP'
+  .action (type) ->
+    configureDevHostForIosDevice type
 
 cli.command 'use-component <name>'
   .description 'configures a custom component to work with figwheel. name is the value you pass to (js/require) function.'
