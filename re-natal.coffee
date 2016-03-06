@@ -26,6 +26,7 @@ projNameUsRx    = /\$PROJECT_NAME_UNDERSCORED\$/g
 interfaceDepsRx = /\$INTERFACE_DEPS\$/g
 platformRx      = /\$PLATFORM\$/g
 devHostRx       = /\$DEV_HOST\$/g
+ipAddressRx     = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/i
 figwheelUrlRx   = /ws:\/\/[0-9a-zA-Z\.]*:/g
 appDelegateRx   = /http:\/\/[^:]+/g
 rnVersion       = '0.20.0'
@@ -214,15 +215,24 @@ configureDevHostForAndroidDevice = (deviceType) ->
   catch {message}
     logErr message
 
+resolveIosDevHost = (deviceType) ->
+  if deviceType == 'simulator'
+    log "Using 'localhost' for iOS simulator"
+    'localhost'
+  else if deviceType == 'real'
+    en0Ip = exec('ipconfig getifaddr en0', true).toString().trim()
+    log "Using IP of interface en0:'#{en0Ip}' for real iOS device"
+    en0Ip
+  else if deviceType.match(ipAddressRx)
+    log "Using development host IP: '#{deviceType}'"
+    deviceType
+  else
+    log("Value '#{deviceType}' is not a valid IP address, still configured it as development host for iOS", 'yellow')
+    deviceType
+
 configureDevHostForIosDevice = (deviceType) ->
   try
-    devHost = if deviceType == 'simulator'
-                'localhost'
-              else if deviceType == 'real'
-                exec('ipconfig getifaddr en0', true).toString().trim()
-              else
-                deviceType
-
+    devHost = resolveIosDevHost(deviceType)
     config = readConfig()
     config.iosHost = devHost
     writeConfig(config)
