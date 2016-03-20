@@ -7,13 +7,13 @@
                            [org.clojure/clojurescript "1.7.170"]
                            $INTERFACE_DEPS$]
             :plugins [[lein-cljsbuild "1.1.1"]
-                      [lein-figwheel "0.5.0-2"]]
+                      [lein-figwheel "0.5.0-6"]]
             :clean-targets ["target/" "index.ios.js" "index.android.js"]
             :aliases {"prod-build" ^{:doc "Recompile code with prod profile."}
                                    ["do" "clean"
                                     ["with-profile" "prod" "cljsbuild" "once" "ios"]
                                     ["with-profile" "prod" "cljsbuild" "once" "android"]]}
-            :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.0-2"]
+            :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.0-6"]
                                             [com.cemerick/piggieback "0.2.1"]]
                              :source-paths ["src" "env/dev"]
                              :cljsbuild    {:builds {:ios     {:source-paths ["src" "env/dev"]

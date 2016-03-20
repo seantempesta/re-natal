@@ -8,7 +8,7 @@
 
 (figwheel/watch-and-reload
   :websocket-url "ws://localhost:3449/figwheel-ws"
-  :heads-up-display true
+  :heads-up-display false
   :jsload-callback #(om/add-root! state/reconciler core/AppRoot 1))
 
 (core/init)

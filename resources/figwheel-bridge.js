@@ -13,13 +13,25 @@ var config = {
 };
 
 var React = require('react-native');
+var WebSocket = require('WebSocket');
 var self;
 var scriptQueue = [];
 var serverHost = null; // will be set dynamically
 var fileBasePath = null; // will be set dynamically
 var evaluate = eval; // This is needed, direct calls to eval does not work (RN packager???)
 var externalModules = {};
-var evalListeners = []; // functions to be called when a script is evaluated
+var evalListeners = [ // Functions to be called after js file is loaded and evaluated
+    function (url) {
+        if (url.indexOf('jsloader') > -1) {
+            shimJsLoader();
+        }
+    },
+    function (url) {
+        if (url.indexOf('/figwheel/client/socket') > -1) {
+            setCorrectWebSocketImpl();
+        }
+    }
+];
 
 var figwheelApp = function (platform, devHost) {
     return React.createClass({
@@ -40,7 +52,7 @@ var figwheelApp = function (platform, devHost) {
         componentDidMount: function () {
             var app = this;
             if (typeof goog === "undefined") {
-                loadApp(platform, devHost, function(appRoot) {
+                loadApp(platform, devHost, function (appRoot) {
                     app.setState({root: appRoot, loaded: true})
                 });
             }
@@ -143,24 +155,30 @@ function interceptRequire() {
     };
 }
 
-// do not show debug messages in yellow box
-function debugToLog() {
-    console.debug = console.log;
+function compileWarningsToYellowBox() {
+    var log = window.console.log;
+    var compileWarningRx = /Figwheel: Compile Warning/;
+    window.console.log = function (msg) {
+        if (msg.match(compileWarningRx) != null) {
+            console.warn(msg);
+        } else {
+            log.call(window.console, msg);
+        }
+    };
 }
 
 function serverBaseUrl(host) {
     return "http://" + host + ":" + config.serverPort
 }
 
+function setCorrectWebSocketImpl() {
+    figwheel.client.socket.get_websocket_imp = function () {
+        return WebSocket;
+    };
+}
 function loadApp(platform, devHost, onLoadCb) {
     serverHost = devHost;
     fileBasePath = config.basePath + platform;
-
-    evalListeners.push(function (url) {
-        if (url.indexOf('jsloader') > -1) {
-            shimJsLoader();
-        }
-    });
 
     // callback when app is ready to get the reloadable component
     var mainJs = '/env/' + platform + '/main.js';
@@ -174,12 +192,11 @@ function loadApp(platform, devHost, onLoadCb) {
     if (typeof goog === "undefined") {
         console.log('Loading Closure base.');
         interceptRequire();
+        compileWarningsToYellowBox();
         importJs('goog/base.js', function () {
             shimBaseGoog();
-            fakeLocalStorageAndDocument();
             importJs('cljs_deps.js');
             importJs('goog/deps.js', function () {
-                debugToLog();
                 // This is needed because of RN packager
                 // seriously React packager? why.
                 var googreq = goog.require;
@@ -208,39 +225,6 @@ function shimBaseGoog() {
     goog.writeScriptTag_ = function (src, optSourceText) {
         importJs(src);
         return true;
-    };
-    goog.inHtmlDocument_ = function () {
-        return true;
-    };
-}
-
-function fakeLocalStorageAndDocument() {
-    window.localStorage = {};
-    window.localStorage.getItem = function () {
-        return 'true';
-    };
-    window.localStorage.setItem = function () {
-    };
-
-    window.document = {};
-    window.document.body = {};
-    window.document.body.dispatchEvent = function () {
-    };
-    window.document.createElement = function () {
-    };
-
-    if (typeof window.location === 'undefined') {
-        window.location = {};
-    }
-    console.debug = console.warn;
-    window.addEventListener = function () {
-    };
-    // make figwheel think that heads-up-display divs are there
-    window.document.querySelector = function (selector) {
-        return {};
-    };
-    window.document.getElementById = function (id) {
-        return {style:{}};
     };
 }
 
