@@ -156,9 +156,9 @@ function interceptRequire() {
 
 function compileWarningsToYellowBox() {
     var log = window.console.log;
-    var compileWarningRx = /Figwheel: Compile Warning/;
+    var compileWarningRx = /Figwheel: Compile/;
     window.console.log = function (msg) {
-        if (msg.match(compileWarningRx) != null) {
+        if (typeof msg.match === 'function' && msg.match(compileWarningRx) != null) {
             console.warn(msg);
         } else {
             log.call(window.console, msg);
