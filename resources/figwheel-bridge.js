@@ -20,7 +20,7 @@ var serverHost = null; // will be set dynamically
 var fileBasePath = null; // will be set dynamically
 var evaluate = eval; // This is needed, direct calls to eval does not work (RN packager???)
 var externalModules = {};
-var evalListeners = [ // Functions to be called after js file is loaded and evaluated
+var evalListeners = [ // Functions to be called after each js file is loaded and evaluated
     function (url) {
         if (url.indexOf('jsloader') > -1) {
             shimJsLoader();
@@ -30,8 +30,7 @@ var evalListeners = [ // Functions to be called after js file is loaded and eval
         if (url.indexOf('/figwheel/client/socket') > -1) {
             setCorrectWebSocketImpl();
         }
-    }
-];
+    }];
 
 var figwheelApp = function (platform, devHost) {
     return React.createClass({
@@ -176,6 +175,7 @@ function setCorrectWebSocketImpl() {
         return WebSocket;
     };
 }
+
 function loadApp(platform, devHost, onLoadCb) {
     serverHost = devHost;
     fileBasePath = config.basePath + platform;
